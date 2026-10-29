@@ -5,9 +5,8 @@ image-version: stable
 
 modules:
   # 1. Hardware Memory Table Configuration
-  # SUCCESS: "kargs" is the official validated module for kernel arguments
   - type: kargs
-    args:
+    kargs:
       - "amdgpu.gttsize=126976"
       - "ttm.pages_limit=32505856"
       - "ttm.page_pool_size=32505856"
