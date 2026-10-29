@@ -17,7 +17,7 @@ jobs:
       - name: Test Build Image
         uses: blue-build/github-action@v1
         with:
-          recipe: 'recipe.yml'
+          recipe: 'recipe.yaml'
           # CRUCIAL CONFIG: Tells BlueBuild to run the full compilation to test stability,
           # but completely disables pushing to your public container registry.
           push: false 
