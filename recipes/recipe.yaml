@@ -1,4 +1,4 @@
-name: ucore-strix-halo
+name: strix-halo-server
 description: Public uCore bootc base image optimized for AMD Strix Halo GenAI platforms
 base-image: ghcr.io/ublue-os/ucore
 image-version: stable
@@ -22,10 +22,10 @@ modules:
       - rocminfo
       - tuned
 
-  # 3. Explicit File Routing Matrix
+  # 3. File Routing Matrix
   - type: files
     files:
-      - src: services/ucore-first-boot.service
+      - src: files/ucore-first-boot.service
         dest: /etc/systemd/system/ucore-first-boot.service
       - src: scripts/ucore-first-boot.sh
         dest: /usr/local/bin/ucore-first-boot.sh
