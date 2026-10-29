@@ -22,15 +22,15 @@ modules:
       - rocminfo
       - tuned
 
-  # 3. File Provisioning (One-shot Systemd Engine Layout)
+  # 3. Explicit File Routing Matrix (Updated to use /services)
   - type: files
     files:
-      - src: ucore-first-boot.service
+      - src: services/ucore-first-boot.service
         dest: /etc/systemd/system/ucore-first-boot.service
-      - src: ucore-first-boot.sh
+      - src: scripts/ucore-first-boot.sh
         dest: /usr/local/bin/ucore-first-boot.sh
 
-  # 4. Phase Processing Shell Hook
+  # 4. Image Compilation Step Trigger
   - type: script
     scripts:
       - setup-base-services.sh
