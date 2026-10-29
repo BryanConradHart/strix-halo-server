@@ -1,0 +1,36 @@
+name: ucore-strix-halo
+description: Public uCore bootc base image optimized for AMD Strix Halo GenAI platforms
+base-image: quay.io/ublue-os/ucore
+image-version: stable
+
+modules:
+  # 1. Hardware Memory Table Configuration
+  - type: bootc-entries
+    kernel-args:
+      - "amdgpu.gttsize=126976"
+      - "ttm.pages_limit=32505856"
+      - "ttm.page_pool_size=32505856"
+      - "amdttm.pages_limit=32505856"
+      - "amdttm.page_pool_size=32505856"
+      - "iommu=pt"
+
+  # 2. Compute Drivers & Profiling Software
+  - type: rpm-ostree
+    install:
+      - mesa-vulkan-drivers
+      - clinfo
+      - rocminfo
+      - tuned
+
+  # 3. File Provisioning (One-shot Systemd Engine Layout)
+  - type: files
+    files:
+      - src: ucore-first-boot.service
+        dest: /etc/systemd/system/ucore-first-boot.service
+      - src: ucore-first-boot.sh
+        dest: /usr/local/bin/ucore-first-boot.sh
+
+  # 4. Phase Processing Shell Hook
+  - type: script
+    scripts:
+      - setup-base-services.sh
