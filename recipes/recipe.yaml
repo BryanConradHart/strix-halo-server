@@ -25,9 +25,9 @@ modules:
   # 3. File Routing Matrix
   - type: files
     files:
-      - src: files/ucore-first-boot.service
+      - src: ucore-first-boot.service
         dest: /etc/systemd/system/ucore-first-boot.service
-      - src: scripts/ucore-first-boot.sh
+      - src: ucore-first-boot.sh
         dest: /usr/local/bin/ucore-first-boot.sh
 
   # 4. Image Compilation Step Trigger
