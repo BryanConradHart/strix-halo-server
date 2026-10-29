@@ -18,6 +18,8 @@ jobs:
         uses: blue-build/github-action@v1
         with:
           recipe: 'recipe.yaml'
+          registry: ghcr.io
+          registry_token: ${{ secrets.GITHUB_TOKEN }}
           # CRUCIAL CONFIG: Tells BlueBuild to run the full compilation to test stability,
           # but completely disables pushing to your public container registry.
           push: false 
