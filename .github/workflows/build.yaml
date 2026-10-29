@@ -22,6 +22,6 @@ jobs:
       - name: Build and Publish Image
         uses: blue-build/github-action@v1
         with:
-          recipe: 'recipe.yml'
+          recipe: 'recipe.yaml'
           registry_token: ${{ secrets.GITHUB_TOKEN }} # Automatically provided securely by GitHub
           prune: true
