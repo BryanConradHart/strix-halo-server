@@ -1,0 +1,27 @@
+name: Build and Push Strix Halo Image
+on:
+  schedule:
+    - cron: '0 0 * * 1' # Rebuilds automatically every Monday at midnight to pull upstream security fixes
+  push:
+    branches:
+      - main            # Triggers a fresh build every time you push code or merge to the main branch
+  workflow_dispatch:    # Adds a manual "Run Workflow" button in the GitHub web interface for testing
+
+jobs:
+  build-and-push:
+    name: Build Image via BlueBuild
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write   # Allows the runner to securely publish your image to GitHub Packages/GHCR
+      id-token: write
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Build and Publish Image
+        uses: blue-build/github-action@v1
+        with:
+          recipe: 'recipe.yml'
+          registry_token: ${{ secrets.GITHUB_TOKEN }} # Automatically provided securely by GitHub
+          prune: true
