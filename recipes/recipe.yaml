@@ -5,8 +5,9 @@ image-version: stable
 
 modules:
   # 1. Hardware Memory Table Configuration
-  - type: bootc-entries
-    kernel-args:
+  # SUCCESS: "kargs" is the official validated module for kernel arguments
+  - type: kargs
+    args:
       - "amdgpu.gttsize=126976"
       - "ttm.pages_limit=32505856"
       - "ttm.page_pool_size=32505856"
@@ -22,7 +23,7 @@ modules:
       - rocminfo
       - tuned
 
-  # 3. File Routing Matrix
+  # 3. Explicit File Routing Matrix
   - type: files
     files:
       - src: services/ucore-first-boot.service
