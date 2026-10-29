@@ -1,6 +1,6 @@
 name: ucore-strix-halo
 description: Public uCore bootc base image optimized for AMD Strix Halo GenAI platforms
-base-image: quay.io/ublue-os/ucore
+base-image: ghcr.io/ublue-os/ucore
 image-version: stable
 
 modules:
