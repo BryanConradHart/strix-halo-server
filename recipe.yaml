@@ -22,7 +22,7 @@ modules:
       - rocminfo
       - tuned
 
-  # 3. Explicit File Routing Matrix (Updated to use /services)
+  # 3. File Routing Matrix
   - type: files
     files:
       - src: services/ucore-first-boot.service
