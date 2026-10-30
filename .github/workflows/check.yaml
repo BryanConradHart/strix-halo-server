@@ -30,9 +30,12 @@ jobs:
           push: false
 
       - name: Test build installer ISO
-        uses: docker://bluebuild/bluebuild:latest
-        with:
-          args: >-
-            --recipe /github/workspace/recipe.yaml
-            build iso
-            --output /github/workspace/output
+        run: |
+          docker run --rm \
+            --privileged \
+            -v "${{ github.workspace }}:/workspace" \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            ghcr.io/blue-build/cli \
+            bluebuild generate-iso \
+              --iso-name strix-halo.iso \
+              recipe /workspace/recipe.yaml
