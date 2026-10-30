@@ -40,15 +40,9 @@ jobs:
 
       - name: Build Installer ISO
         run: |
-          docker run --rm \
-            --privileged \
-            -w /workspace \
-            -v "${{ github.workspace }}:/workspace" \
-            -v /var/run/docker.sock:/var/run/docker.sock \
-            ghcr.io/blue-build/cli \
-            bluebuild generate-iso \
-              --iso-name strix-halo.iso \
-              recipe /workspace/recipes/recipe.yaml
+          bluebuild generate-iso \
+            --iso-name strix-halo.iso \
+            recipe recipes/recipe.yaml
 
       - name: Check whether the ISO differs from the most recent release
         id: release_check

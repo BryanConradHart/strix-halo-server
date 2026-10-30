@@ -32,12 +32,6 @@ jobs:
 
       - name: Test build installer ISO
         run: |
-          docker run --rm \
-            --privileged \
-            -w /workspace \
-            -v "${{ github.workspace }}:/workspace" \
-            -v /var/run/docker.sock:/var/run/docker.sock \
-            ghcr.io/blue-build/cli \
-            bluebuild generate-iso \
-              --iso-name strix-halo.iso \
-              recipe /workspace/recipes/recipe.yaml
+          bluebuild generate-iso \
+            --iso-name strix-halo.iso \
+            recipe recipes/recipe.yaml
