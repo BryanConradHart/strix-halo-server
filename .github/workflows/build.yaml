@@ -1,30 +1,93 @@
 name: Build and Push Strix Halo Image
+
 on:
   schedule:
     - cron: '0 0 * * 1' # Rebuilds automatically every Monday at midnight to pull upstream security fixes
   push:
     branches:
-      - main            # Triggers a fresh build every time you push code or merge to the main branch
-  workflow_dispatch:    # Adds a manual "Run Workflow" button in the GitHub web interface for testing
+      - main # Triggers a fresh build whenever you push or merge to main
+  workflow_dispatch: # Adds a Run Workflow button in GitHub UI
 
 jobs:
-  build-and-push:
-    name: Build Image via BlueBuild
+  build-and-release:
+    name: Build Image and ISO
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      packages: write   # Allows the runner to securely publish your image to GitHub Packages/GHCR
+      contents: write
+      packages: write
       id-token: write
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Build and Publish Image
+      - name: Compute build tag
+        id: meta
+        shell: bash
+        run: |
+          echo "tag=v$(date -u +%Y.%m.%d-%H%M%S)-r${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and Publish Container Image
         uses: blue-build/github-action@v1
         with:
           recipe: 'recipe.yaml'
           registry: ghcr.io
-          registry_token: ${{ secrets.GITHUB_TOKEN }} # Automatically provided securely by GitHub
+          registry_token: ${{ secrets.GITHUB_TOKEN }}
           cosign_private_key: ${{ secrets.COSIGN_PRIVATE_KEY }}
           cosign_public_key: ${{ secrets.COSIGN_PUBLIC_KEY }}
           prune: true
+          push: true
+
+      - name: Build Installer ISO
+        run: |
+          bluebuild generate-iso \
+            --iso-name strix-halo.iso \
+            recipe recipes/recipe.yaml
+
+      - name: Check whether the ISO differs from the most recent release
+        id: release_check
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          current_iso="$(ls output/*.iso | head -n 1)"
+          current_hash="$(sha256sum "$current_iso" | awk '{print $1}')"
+
+          latest_tag="$(gh release list --limit 1 --exclude-drafts --json tagName -q '.[0].tagName' || true)"
+
+          if [[ -n "${latest_tag}" ]]; then
+            if gh release download "${latest_tag}" --repo "${{ github.repository }}" -p '*.iso' -O /tmp/previous.iso >/dev/null 2>&1; then
+              previous_hash="$(sha256sum /tmp/previous.iso | awk '{print $1}')"
+
+              if [[ "${current_hash}" == "${previous_hash}" ]]; then
+                echo "skip=true" >> "$GITHUB_OUTPUT"
+                echo "ISO is identical to the most recent release; skipping release creation."
+                exit 0
+              fi
+            fi
+          fi
+
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
+      - name: Publish the image with the same tag as the release
+        if: ${{ steps.release_check.outputs.skip != 'true' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          IMAGE="ghcr.io/${{ github.repository_owner }}/strix-halo-server"
+          docker pull "${IMAGE}:latest"
+          docker tag "${IMAGE}:latest" "${IMAGE}:${{ steps.meta.outputs.tag }}"
+          docker push "${IMAGE}:${{ steps.meta.outputs.tag }}"
+
+      - name: Create a GitHub Release for the ISO
+        if: ${{ steps.release_check.outputs.skip != 'true' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.tag }}
+          name: "Strix Halo ${{ steps.meta.outputs.tag }}"
+          files: output/*.iso
+          draft: false
+          prerelease: false

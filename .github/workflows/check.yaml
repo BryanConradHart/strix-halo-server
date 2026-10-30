@@ -1,25 +1,38 @@
 name: Verify and Test Pull Request Changes
+
 on:
   pull_request:
     branches:
-      - main  # Automatically triggers whenever a PR is opened targeting your main branch
+      - main
 
 jobs:
   verify-recipe:
-    name: Test Compile BlueBuild Recipe
+    name: Test compile BlueBuild recipe against PR branch
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
 
-      - name: Test Build Image
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Test build image
         uses: blue-build/github-action@v1
         with:
           recipe: 'recipe.yaml'
           registry: ghcr.io
           registry_token: ${{ secrets.GITHUB_TOKEN }}
-          # CRUCIAL CONFIG: Tells BlueBuild to run the full compilation to test stability,
-          # but completely disables pushing to your public container registry.
-          push: false 
+          cosign_private_key: ${{ secrets.COSIGN_PRIVATE_KEY }}
+          cosign_public_key: ${{ secrets.COSIGN_PUBLIC_KEY }}
+          prune: true
+          push: false
+          skip_checkout: true
+
+      # Disabled to conserve Actions runtime; installer ISO generation was confirmed working.
+      # - name: Test build installer ISO
+      #   run: |
+      #     bluebuild generate-iso \
+      #       --iso-name strix-halo.iso \
+      #       recipe recipes/recipe.yaml
