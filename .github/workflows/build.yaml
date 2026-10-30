@@ -2,11 +2,11 @@ name: Build and Push Strix Halo Image
 
 on:
   schedule:
-    - cron: '0 0 * * 1'
+    - cron: '0 0 * * 1' # Rebuilds automatically every Monday at midnight to pull upstream security fixes
   push:
     branches:
       - main
-  workflow_dispatch:
+  workflow_dispatch: # adds a manual build option
 
 jobs:
   build-and-release:
