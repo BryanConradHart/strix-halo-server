@@ -28,6 +28,7 @@ jobs:
           cosign_public_key: ${{ secrets.COSIGN_PUBLIC_KEY }}
           prune: true
           push: false
+          skip_checkout: true
 
       - name: Test build installer ISO
         run: |
