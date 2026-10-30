@@ -4,11 +4,39 @@ on:
   pull_request:
     branches:
       - main
-  workflow_dispatch:
+    types:
+      - opened
+      - synchronize
+      - reopened
 
 jobs:
   verify-recipe:
-    uses: ./.github/workflows/release-build-reusable.yaml
-    with:
-      dry_run: true
-    secrets: inherit
+    name: Test compile BlueBuild recipe against PR branch
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Test build image
+        uses: blue-build/github-action@v1
+        with:
+          recipe: 'recipe.yaml'
+          registry: ghcr.io
+          registry_token: ${{ secrets.GITHUB_TOKEN }}
+          cosign_private_key: ${{ secrets.COSIGN_PRIVATE_KEY }}
+          cosign_public_key: ${{ secrets.COSIGN_PUBLIC_KEY }}
+          prune: true
+          push: false
+
+      - name: Test build installer ISO
+        uses: docker://bluebuild/bluebuild:latest
+        with:
+          args: >-
+            --recipe /github/workspace/recipe.yaml
+            build iso
+            --output /github/workspace/output
