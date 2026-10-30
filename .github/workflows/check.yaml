@@ -1,25 +1,14 @@
 name: Verify and Test Pull Request Changes
+
 on:
   pull_request:
     branches:
-      - main  # Automatically triggers whenever a PR is opened targeting your main branch
+      - main
+  workflow_dispatch:
 
 jobs:
   verify-recipe:
-    name: Test Compile BlueBuild Recipe
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Test Build Image
-        uses: blue-build/github-action@v1
-        with:
-          recipe: 'recipe.yaml'
-          registry: ghcr.io
-          registry_token: ${{ secrets.GITHUB_TOKEN }}
-          # CRUCIAL CONFIG: Tells BlueBuild to run the full compilation to test stability,
-          # but completely disables pushing to your public container registry.
-          push: false 
+    uses: ./.github/workflows/release-build-reusable.yaml
+    with:
+      dry_run: true
+    secrets: inherit
