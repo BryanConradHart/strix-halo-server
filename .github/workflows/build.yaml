@@ -39,12 +39,15 @@ jobs:
           push: true
 
       - name: Build Installer ISO
-        uses: docker://bluebuild/bluebuild:latest
-        with:
-          args: >-
-            --recipe /github/workspace/recipe.yaml
-            build iso
-            --output /github/workspace/output
+        run: |
+          docker run --rm \
+            --privileged \
+            -v "${{ github.workspace }}:/workspace" \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            ghcr.io/blue-build/cli \
+            bluebuild generate-iso \
+              --iso-name strix-halo.iso \
+              recipe /workspace/recipes/recipe.yaml
 
       - name: Check whether the ISO differs from the most recent release
         id: release_check
