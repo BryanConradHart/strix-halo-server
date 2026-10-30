@@ -38,4 +38,4 @@ jobs:
             ghcr.io/blue-build/cli \
             bluebuild generate-iso \
               --iso-name strix-halo.iso \
-              recipe /workspace/recipe.yaml
+              recipe /workspace/recipes/recipe.yaml
