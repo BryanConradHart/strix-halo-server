@@ -13,7 +13,7 @@ This project provides a reproducible base image that boots cleanly on Strix Halo
 
 ## Quick start
 
-Choose the installation method that matches your setup:
+Pick an installation method:
 
 - ISO install: best for clean bare-metal installation
 - bootc install: best for an existing system or for update-driven deployment
@@ -40,6 +40,8 @@ Then:
 2. Select the installer or live environment from the boot menu.
 3. Follow the on-screen installation flow to install the image to disk.
 4. Reboot into the installed system.
+
+The ISO is the bootstrap path. After installation, the system is managed with bootc for upgrades and image switching.
 
 ## Install with bootc
 
@@ -81,18 +83,38 @@ Then reboot to apply the image.
 sudo reboot
 ```
 
-### Upgrade later
+## Managing upgrades after installation
 
-To update to the newest build:
+After either install method, upgrades are handled through bootc. The ISO is only used for the initial install; it is not the ongoing update path.
+
+Check the current image state:
+
+```bash
+sudo bootc status
+```
+
+Upgrade to the newest published build:
 
 ```bash
 sudo bootc upgrade
 ```
 
-Or switch directly to a specific tagged build:
+Or switch directly to a specific image tag:
+
+```bash
+sudo bootc switch --transport registry ghcr.io/bryanconradhart/strix-halo-server:latest
+```
+
+or a pinned version:
 
 ```bash
 sudo bootc switch --transport registry ghcr.io/bryanconradhart/strix-halo-server:v2026.10.30-153015-r123
+```
+
+Then reboot to apply the new image:
+
+```bash
+sudo reboot
 ```
 
 ## Image tags
