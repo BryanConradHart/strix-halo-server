@@ -1,4 +1,4 @@
-name: Build and Push Strix Halo Image
+name: Build and Publish Strix Halo Image
 
 on:
   schedule:
@@ -9,15 +9,15 @@ on:
   workflow_dispatch: # Adds a Run Workflow button in GitHub UI
 
 concurrency:
-  group: build-and-release-${{ github.ref }}
+  group: build-and-publish-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  build-and-release:
-    name: Build Image and ISO
+  build-and-publish:
+    name: Build and Publish Image
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       packages: write
       id-token: write
 
@@ -42,48 +42,7 @@ jobs:
           prune: true
           push: true
 
-      - name: Build Installer ISO
-        run: |
-          bluebuild generate-iso \
-            --output-dir "$RUNNER_TEMP" \
-            --iso-name strix-halo.iso \
-            recipe recipes/recipe.yaml
-
-      - name: Check whether the ISO differs from the most recent release
-        id: release_check
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-
-          current_iso="${RUNNER_TEMP}/strix-halo.iso"
-          if [[ ! -s "${current_iso}" ]]; then
-            echo "::error::Expected installer ISO ${current_iso} was not generated."
-            exit 1
-          fi
-          current_hash="$(sha256sum "$current_iso" | awk '{print $1}')"
-
-          latest_tag="$(gh release list --limit 1 --exclude-drafts --json tagName -q '.[0].tagName // empty')"
-
-          if [[ -n "${latest_tag}" ]]; then
-            if gh release download "${latest_tag}" --repo "${GITHUB_REPOSITORY}" -p '*.iso' -O /tmp/previous.iso; then
-              previous_hash="$(sha256sum /tmp/previous.iso | awk '{print $1}')"
-
-              if [[ "${current_hash}" == "${previous_hash}" ]]; then
-                echo "skip=true" >> "$GITHUB_OUTPUT"
-                echo "ISO is identical to the most recent release; skipping release creation."
-                exit 0
-              fi
-            else
-              echo "::warning::Could not download an ISO from release ${latest_tag}; proceeding with release creation."
-            fi
-          fi
-
-          echo "skip=false" >> "$GITHUB_OUTPUT"
-
-      - name: Publish the image with the same tag as the release
-        if: ${{ steps.release_check.outputs.skip != 'true' }}
+      - name: Publish a versioned image tag
         shell: bash
         env:
           IMAGE_TAG: ${{ steps.meta.outputs.tag }}
@@ -94,17 +53,3 @@ jobs:
           docker pull "${IMAGE}:latest"
           docker tag "${IMAGE}:latest" "${IMAGE}:${IMAGE_TAG}"
           docker push "${IMAGE}:${IMAGE_TAG}"
-
-      - name: Create a GitHub Release and upload the ISO
-        if: ${{ steps.release_check.outputs.skip != 'true' }}
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ steps.meta.outputs.tag }}
-        run: |
-          set -euo pipefail
-
-          gh release create "${RELEASE_TAG}" "${RUNNER_TEMP}/strix-halo.iso" \
-            --repo "${GITHUB_REPOSITORY}" \
-            --title "Strix Halo ${RELEASE_TAG}" \
-            --latest

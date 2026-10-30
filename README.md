@@ -1,91 +1,100 @@
 # Strix Halo Server
 
-A lightweight, bootable container image designed for AMD Strix Halo systems, with emphasis on high-performance local AI workloads, low-drift system maintenance, and practical self-hosted server use.
+A bootc-based Linux image for AMD Strix Halo systems, published to GHCR for installation and updates.
 
-This project provides a reproducible base image that boots cleanly on Strix Halo hardware, stays current with upstream updates, and is easy to rebuild and maintain using an immutable, bootc-based workflow.
+## Image contents
 
-## What this project provides
+- Based on uCore, with Strix Halo kernel settings for GPU memory sizing and IOMMU passthrough, targeting 128 GB systems.
+- Includes Mesa Vulkan drivers, `clinfo` and `rocminfo` hardware inspection tools, and `tuned`.
+- Keeps AI frameworks, inference servers, and other workload-specific software optional, so you can add only what you need in a derived image.
 
-- a bootable ISO for installing the system to bare metal
-- a container image published to GHCR for bootc-based installation and updates
-- a lightweight Linux base tuned for local AI and dev workloads on Strix Halo systems
-- a system that is easy to rebuild, update, and extend with workload-specific components
+## Install the image
 
-## Quick start
+Choose the option that matches your starting point. All three options need an internet connection to pull the image.
 
-Pick an installation method:
+### 1. On a system that already has bootc
 
-- ISO install: best for clean bare-metal installation
-- bootc install: best for an existing system or for update-driven deployment
-
-## Install from the ISO
-
-Download the latest ISO from the GitHub Releases page for this repository.
-
-1. Open the Releases page for this repository.
-2. Download the latest available ISO asset.
-3. Write it to a USB drive or bootable media.
-
-On Linux:
-
-```bash
-sudo dd if=path/to/strix-halo-server.iso of=/dev/sdX bs=4M status=progress conv=fsync
-```
-
-On macOS or Windows, use a tool such as balenaEtcher or Rufus.
-
-Then:
-
-1. Boot the target machine from the USB drive.
-2. Select the installer or live environment from the boot menu.
-3. Follow the on-screen installation flow to install the image to disk.
-4. Reboot into the installed system.
-
-The ISO is the bootstrap path. After installation, the system is managed with bootc for upgrades and image switching.
-
-## Install with bootc
-
-This repository also publishes a bootc-compatible container image to GHCR. This is the recommended path if you want to install or update from a container-native workflow.
-
-### Pull the image
-
-```bash
-docker pull ghcr.io/bryanconradhart/strix-halo-server:latest
-```
-
-or:
-
-```bash
-podman pull ghcr.io/bryanconradhart/strix-halo-server:latest
-```
-
-### Install to a local filesystem
-
-For an existing Linux system, you can install the image into the target root filesystem using bootc.
-
-```bash
-sudo bootc install to-filesystem --root-ssh-key ~/.ssh/id_ed25519.pub /dev/nvme0n1
-```
-
-If you are installing to a different disk or partition, replace `/dev/nvme0n1` with the correct target device.
-
-### Switch the system to the image
-
-After installation, point the running system at the published image:
+On a system managed by bootc, run `bootc switch` and reboot:
 
 ```bash
 sudo bootc switch --transport registry ghcr.io/bryanconradhart/strix-halo-server:latest
+sudo systemctl reboot
 ```
 
-Then reboot to apply the image.
+Check whether your current system is bootc-managed with `sudo bootc status`. For uCore installations managed with rpm-ostree, follow the [uCore transition guidance](https://projectucore.org/docs/rebasing/).
+
+For a repeatable deployment, replace `latest` with a versioned tag listed on the [published container image page](https://github.com/BryanConradHart/strix-halo-server/pkgs/container/strix-halo-server).
+
+### 2. From a live USB using a temporary Linux system
+
+Boot the target computer from a [Fedora Workstation live USB](https://fedoraproject.org/workstation/download/). This provides a temporary Linux system to run the installer without first installing an operating system. In its terminal, install Podman if needed, then run the image's bootc installer:
 
 ```bash
-sudo reboot
+sudo dnf install -y podman
+lsblk -o NAME,PATH,SIZE,MODEL,TYPE,MOUNTPOINTS
+
+sudo podman run --rm --privileged --pid=host --ipc=host \
+  -v /var/lib/containers:/var/lib/containers \
+  -v /dev:/dev \
+  --security-opt label=type:unconfined_t \
+  ghcr.io/bryanconradhart/strix-halo-server:latest \
+  bootc install to-disk /dev/nvme0n1
 ```
+
+The command assumes the target is the first NVMe disk (`/dev/nvme0n1`), a common setup. If your target disk is different, use the `lsblk` output to identify it by size and model, then replace the device path in the command with the whole-disk device (not a partition). The live USB also appears in the list. **This erases the target disk, including all existing data.** Verify the device carefully before running the command. After it completes, shut down, remove the live USB, and boot from the installed disk. The new system will use the published image for future bootc updates.
+
+### 3. By building an installable ISO
+
+Build an ISO locally from our published image with the [BlueBuild CLI](https://blue-build.org/how-to/generate-iso/). Choose one way to run it:
+
+Install the CLI following its [installation instructions](https://blue-build.org/), then run:
+
+```bash
+sudo bluebuild generate-iso \
+  --iso-name strix-halo.iso \
+  --platform linux/amd64 \
+  image ghcr.io/bryanconradhart/strix-halo-server:latest
+```
+
+Or run it in Docker. The container needs `--privileged` to run the ISO builder; the current directory is mounted so the ISO is saved there.
+
+```bash
+docker run --rm --privileged \
+  -v "$PWD:/bluebuild" \
+  -w /bluebuild \
+  ghcr.io/blue-build/cli:latest \
+  bluebuild generate-iso \
+  --run-driver podman \
+  --iso-name strix-halo.iso \
+  --platform linux/amd64 \
+  image ghcr.io/bryanconradhart/strix-halo-server:latest
+```
+
+Or use Podman:
+
+```bash
+podman run --rm --privileged \
+  -v "$PWD:/bluebuild" \
+  -w /bluebuild \
+  ghcr.io/blue-build/cli:latest \
+  bluebuild generate-iso \
+  --run-driver podman \
+  --iso-name strix-halo.iso \
+  --platform linux/amd64 \
+  image ghcr.io/bryanconradhart/strix-halo-server:latest
+```
+
+Each command creates `strix-halo.iso` in the current directory. Replace `latest` with a versioned tag from the [published container image page](https://github.com/BryanConradHart/strix-halo-server/pkgs/container/strix-halo-server) to build from a specific image. Write the ISO to a USB drive using `dd` or a graphical flashing tool such as balenaEtcher or Rufus. For `dd`:
+
+```bash
+sudo dd if=./strix-halo.iso of=/dev/sdX bs=4M status=progress conv=fsync
+```
+
+Replace `/dev/sdX` with the USB device (not a partition); writing the image erases that device. Boot the target computer from the USB drive and follow the installer's on-screen steps to install the image to the system disk.
 
 ## Managing upgrades after installation
 
-After either install method, upgrades are handled through bootc. The ISO is only used for the initial install; it is not the ongoing update path.
+After installation, upgrades are handled through bootc.
 
 Check the current image state:
 
@@ -120,10 +129,8 @@ sudo reboot
 ## Image tags
 
 The repository publishes:
-
 - `latest`: newest build
-- versioned tags in the form `vYYYY.MM.DD-HHMMSS-rRUN_NUMBER`: exact release builds
-- release assets for ISO downloads on the GitHub Releases page
+- versioned tags in the form `vYYYY.MM.DD-HHMMSS-rRUN_NUMBER`: exact image builds
 
 This gives you both:
 

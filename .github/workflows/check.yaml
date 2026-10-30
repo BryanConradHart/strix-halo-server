@@ -29,10 +29,3 @@ jobs:
           prune: true
           push: false
           skip_checkout: true
-
-      # Disabled to conserve Actions runtime; installer ISO generation was confirmed working.
-      # - name: Test build installer ISO
-      #   run: |
-      #     bluebuild generate-iso \
-      #       --iso-name strix-halo.iso \
-      #       recipe recipes/recipe.yaml
