@@ -1,16 +1,42 @@
-name: Build and Push Strix Halo Image
+name: Verify and Test Pull Request Changes
 
 on:
-  schedule:
-    - cron: '0 0 * * 1' # Rebuilds automatically every Monday at midnight to pull upstream security fixes
-  push:
+  pull_request:
     branches:
       - main
-  workflow_dispatch: # adds a manual build option
+    types:
+      - opened
+      - synchronize
+      - reopened
 
 jobs:
-  build-and-release:
-    uses: ./.github/workflows/release-build-reusable.yaml
-    with:
-      dry_run: false
-    secrets: inherit
+  verify-recipe:
+    name: Test compile BlueBuild recipe against PR branch
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Test build image
+        uses: blue-build/github-action@v1
+        with:
+          recipe: 'recipe.yaml'
+          registry: ghcr.io
+          registry_token: ${{ secrets.GITHUB_TOKEN }}
+          cosign_private_key: ${{ secrets.COSIGN_PRIVATE_KEY }}
+          cosign_public_key: ${{ secrets.COSIGN_PUBLIC_KEY }}
+          prune: true
+          push: false
+
+      - name: Test build installer ISO
+        uses: docker://bluebuild/bluebuild:latest
+        with:
+          args: >-
+            --recipe /github/workspace/recipe.yaml
+            build iso
+            --output /github/workspace/output
