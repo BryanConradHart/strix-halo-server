@@ -1,0 +1,13 @@
+[Unit]
+Description=First-boot Lemonade Server setup
+ConditionPathExists=!/etc/lemonade/server.env
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/lemonade-server-enroll.sh
+TimeoutStartSec=4min
+
+[Install]
+WantedBy=multi-user.target

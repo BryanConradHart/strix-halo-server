@@ -1,0 +1,39 @@
+modules:
+  - type: kargs
+    kargs:
+      - "amdgpu.gttsize=126976"
+      - "ttm.pages_limit=32505856"
+      - "ttm.page_pool_size=32505856"
+      - "amdttm.pages_limit=32505856"
+      - "amdttm.page_pool_size=32505856"
+      - "iommu=pt"
+
+  - type: rpm-ostree
+    install:
+      - mesa-vulkan-drivers
+      - clinfo
+      - rocminfo
+      - tuned
+
+  - type: systemd
+    system:
+      enabled:
+        - podman-restart.service
+
+  - type: files
+    files:
+      - source: strix-first-boot.sh
+        destination: /usr/bin/strix-first-boot.sh
+      - source: strix-first-boot.service
+        destination: /usr/lib/systemd/system/strix-first-boot.service
+
+  - type: script
+    snippets:
+      - |
+        chmod 0755 /usr/bin/strix-first-boot.sh
+
+  - type: systemd
+    system:
+      enabled:
+        - tuned.service
+        - strix-first-boot.service

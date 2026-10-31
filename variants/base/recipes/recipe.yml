@@ -1,0 +1,7 @@
+name: strix-halo-server
+description: Clean uCore bootc image optimized for AMD Strix Halo GenAI platforms
+base-image: ghcr.io/ublue-os/ucore
+image-version: stable
+
+modules:
+  - from-file: ../../../shared/strix-modules.yml

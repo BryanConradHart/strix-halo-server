@@ -13,9 +13,39 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build-and-publish:
-    name: Build and Publish Image
+  build-tag:
+    name: Compute shared image tag
     runs-on: ubuntu-latest
+    steps:
+      - name: Compute build tag
+        id: meta
+        shell: bash
+        run: |
+          echo "tag=v$(date -u +%Y.%m.%d-%H%M%S)-r${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+
+    outputs:
+      tag: ${{ steps.meta.outputs.tag }}
+
+  build-and-publish:
+    name: Build and Publish ${{ matrix.variant }} image
+    needs: build-tag
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - variant: base
+            image: strix-halo-server
+          - variant: arcane-manager
+            image: strix-halo-server-arcane-manager
+          - variant: arcane-agent-edge
+            image: strix-halo-server-arcane-agent-edge
+          - variant: arcane-manager-direct
+            image: strix-halo-server-arcane-manager-direct
+          - variant: ai-toolbox-cockpit
+            image: strix-halo-server-ai-toolbox-cockpit
+          - variant: lemonade
+            image: strix-halo-server-lemonade
     permissions:
       contents: read
       packages: write
@@ -25,31 +55,31 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Compute build tag
-        id: meta
-        shell: bash
-        run: |
-          echo "tag=v$(date -u +%Y.%m.%d-%H%M%S)-r${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+      - name: Prepare shared files
+        run: ./scripts/prepare-variant-files.sh "${{ matrix.variant }}"
 
       - name: Build and Publish Container Image
         uses: blue-build/github-action@v1
         with:
-          recipe: 'recipe.yaml'
+          recipe: 'recipe.yml'
+          working_directory: ./variants/${{ matrix.variant }}
           registry: ghcr.io
           registry_token: ${{ secrets.GITHUB_TOKEN }}
           cosign_private_key: ${{ secrets.COSIGN_PRIVATE_KEY }}
           cosign_public_key: ${{ secrets.COSIGN_PUBLIC_KEY }}
           prune: true
           push: true
+          skip_checkout: true
 
       - name: Publish a versioned image tag
         shell: bash
         env:
-          IMAGE_TAG: ${{ steps.meta.outputs.tag }}
+          IMAGE_NAME: ${{ matrix.image }}
+          IMAGE_TAG: ${{ needs.build-tag.outputs.tag }}
         run: |
           set -euo pipefail
 
-          IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}"
+          IMAGE="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${IMAGE_NAME}"
           docker pull "${IMAGE}:latest"
           docker tag "${IMAGE}:latest" "${IMAGE}:${IMAGE_TAG}"
           docker push "${IMAGE}:${IMAGE_TAG}"

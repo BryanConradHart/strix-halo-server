@@ -1,0 +1,17 @@
+name: strix-halo-server-ai-toolbox-cockpit
+description: Strix Halo bootc image with AI Toolbox Cockpit
+base-image: ghcr.io/ublue-os/ucore
+image-version: stable
+
+modules:
+  - from-file: ../../../shared/strix-modules.yml
+
+  - type: rpm-ostree
+    install:
+      - distrobox
+      - git-core
+      - pipx
+
+  - type: script
+    snippets:
+      - pipx install --global "git+https://github.com/kyuz0/ai-toolbox-cockpit.git@e619c2cff5af4fa294cc1f7e1ed1590d7c505cb8"

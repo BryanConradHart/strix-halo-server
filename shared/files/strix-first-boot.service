@@ -1,0 +1,14 @@
+[Unit]
+Description=Configure Strix Halo performance profile
+ConditionPathExists=!/var/lib/strix/tuned-profile-configured
+Requires=tuned.service
+After=tuned.service
+
+[Service]
+Type=oneshot
+StateDirectory=strix
+ExecStart=/usr/bin/strix-first-boot.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
