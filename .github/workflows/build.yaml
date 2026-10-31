@@ -38,6 +38,14 @@ jobs:
             image: strix-halo-server
           - variant: arcane
             image: strix-halo-server-arcane
+          - variant: arcane-edge
+            image: strix-halo-server-arcane-edge
+          - variant: arcane-manager
+            image: strix-halo-server-arcane-manager
+          - variant: ai-toolbox-cockpit
+            image: strix-halo-server-ai-toolbox-cockpit
+          - variant: lemonade
+            image: strix-halo-server-lemonade
     permissions:
       contents: read
       packages: write
@@ -46,6 +54,9 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+
+      - name: Prepare shared files
+        run: ./scripts/prepare-variant-files.sh "${{ matrix.variant }}"
 
       - name: Build and Publish Container Image
         uses: blue-build/github-action@v1
@@ -58,6 +69,7 @@ jobs:
           cosign_public_key: ${{ secrets.COSIGN_PUBLIC_KEY }}
           prune: true
           push: true
+          skip_checkout: true
 
       - name: Publish a versioned image tag
         shell: bash

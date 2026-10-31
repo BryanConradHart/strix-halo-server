@@ -1,0 +1,22 @@
+[Unit]
+Description=Arcane Edge Agent
+ConditionPathExists=/etc/arcane/agent.env
+Requires=podman.socket
+After=podman.socket
+
+[Container]
+Image=ghcr.io/getarcaneapp/agent:latest
+ContainerName=arcane-edge-agent
+Environment=EDGE_AGENT=true
+Environment=EDGE_TRANSPORT=poll
+EnvironmentFile=/etc/arcane/agent.env
+SecurityLabelDisable=true
+Volume=/run/podman/podman.sock:/var/run/docker.sock
+Volume=arcane-edge-agent-data:/app/data
+
+[Service]
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

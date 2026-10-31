@@ -1,0 +1,26 @@
+[Unit]
+Description=Lemonade Server
+ConditionPathExists=/etc/lemonade/server.env
+Requires=podman.socket
+After=podman.socket
+
+[Container]
+Image=ghcr.io/lemonade-sdk/lemonade-server:latest
+ContainerName=lemonade-server
+EnvironmentFile=/etc/lemonade/server.env
+PublishPort=13305:13305
+AddDevice=/dev/kfd
+AddDevice=/dev/dri
+GroupAdd=video
+GroupAdd=render
+AutoUpdate=registry
+Volume=lemonade-cache:/opt/lemonade/.cache/huggingface
+Volume=lemonade-llama:/opt/lemonade/llama
+Volume=lemonade-data:/opt/lemonade/.cache/lemonade
+Volume=lemonade-config:/opt/lemonade/.config/lemonade
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

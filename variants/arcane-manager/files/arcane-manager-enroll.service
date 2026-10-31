@@ -1,0 +1,13 @@
+[Unit]
+Description=First-boot Arcane Manager setup
+ConditionPathExists=!/etc/arcane/manager.env
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/arcane-manager-enroll.sh
+TimeoutStartSec=4min
+
+[Install]
+WantedBy=multi-user.target

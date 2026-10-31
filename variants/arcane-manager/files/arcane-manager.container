@@ -1,0 +1,26 @@
+[Unit]
+Description=Arcane Manager
+ConditionPathExists=/etc/arcane/manager.env
+Requires=podman.socket
+After=podman.socket
+
+[Container]
+Image=ghcr.io/getarcaneapp/manager:latest
+ContainerName=arcane-manager
+EnvironmentFile=/etc/arcane/manager.env
+Environment=PROJECTS_DIRECTORY=/opt/docker
+Environment=PUID=1000
+Environment=PGID=1000
+PublishPort=3552:3552
+SecurityLabelDisable=true
+PodmanArgs=--cgroupns=host
+AutoUpdate=registry
+Volume=/run/podman/podman.sock:/var/run/docker.sock
+Volume=arcane-manager-data:/app/data
+Volume=/var/home/core/arcane-projects:/opt/docker
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

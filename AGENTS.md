@@ -25,7 +25,7 @@ This repository defines easy-to-maintain, easy-to-deploy bootable images for AMD
 
 - Prefer changes that reduce operational complexity and keep the base image and variants maintainable.
 - Keep additions aligned with the base-platform scope; avoid adding optional workload stacks to the default image.
-- Validate every image recipe in CI and publish all variants from the build workflow. Keep builds independent and parallel; CI must not generate installer ISOs.
+- Validate every image recipe in CI and publish all variants from the build workflow. Keep builds independent and parallel; CI must not generate installer ISOs. Stage shared BlueBuild file assets into each variant's build context before validation and publishing.
 - Keep credentials and machine-specific secrets out of recipes, source files, image builds, and published images. Provision secrets on the installed host.
 - Validate changes against the requirements they affect, especially hardware compatibility, installation, updates, and reproducibility. Update root and variant-specific documentation when their workflows change.
 - Update related user-facing documentation when behavior or supported workflows change.

@@ -1,0 +1,26 @@
+name: strix-halo-server-arcane-edge
+description: Strix Halo bootc image with the Arcane Edge Agent
+base-image: ghcr.io/ublue-os/ucore
+image-version: stable
+
+modules:
+  - from-file: ../../../shared/strix-modules.yml
+
+  - type: files
+    files:
+      - source: arcane-edge-enroll.service
+        destination: /usr/lib/systemd/system/arcane-edge-enroll.service
+      - source: arcane-edge-enroll.sh
+        destination: /usr/libexec/arcane-edge-enroll.sh
+      - source: arcane-edge-agent.container
+        destination: /usr/share/containers/systemd/arcane-edge-agent.container
+
+  - type: script
+    snippets:
+      - chmod 0755 /usr/libexec/arcane-edge-enroll.sh
+
+  - type: systemd
+    system:
+      enabled:
+        - podman.socket
+        - arcane-edge-enroll.service

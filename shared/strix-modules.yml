@@ -22,9 +22,9 @@ modules:
 
   - type: files
     files:
-      - source: ../../../shared/files/strix-first-boot.sh
+      - source: strix-first-boot.sh
         destination: /usr/bin/strix-first-boot.sh
-      - source: ../../../shared/files/strix-first-boot.service
+      - source: strix-first-boot.service
         destination: /usr/lib/systemd/system/strix-first-boot.service
 
   - type: script

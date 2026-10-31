@@ -1,0 +1,27 @@
+name: strix-halo-server-lemonade
+description: Strix Halo bootc image with Lemonade Server
+base-image: ghcr.io/ublue-os/ucore
+image-version: stable
+
+modules:
+  - from-file: ../../../shared/strix-modules.yml
+
+  - type: files
+    files:
+      - source: lemonade-server.container
+        destination: /usr/share/containers/systemd/lemonade-server.container
+      - source: lemonade-server-enroll.service
+        destination: /usr/lib/systemd/system/lemonade-server-enroll.service
+      - source: lemonade-server-enroll.sh
+        destination: /usr/libexec/lemonade-server-enroll.sh
+
+  - type: script
+    snippets:
+      - chmod 0755 /usr/libexec/lemonade-server-enroll.sh
+
+  - type: systemd
+    system:
+      enabled:
+        - podman.socket
+        - podman-auto-update.timer
+        - lemonade-server-enroll.service
