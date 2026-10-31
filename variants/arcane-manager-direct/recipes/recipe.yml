@@ -1,5 +1,5 @@
-name: strix-halo-server-arcane
-description: Strix Halo bootc image with the Arcane Direct Agent
+name: strix-halo-server-arcane-manager-direct
+description: Strix Halo bootc image with the Arcane Manager Direct Agent
 base-image: ghcr.io/ublue-os/ucore
 image-version: stable
 

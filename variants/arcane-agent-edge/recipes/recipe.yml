@@ -1,4 +1,4 @@
-name: strix-halo-server-arcane-edge
+name: strix-halo-server-arcane-agent-edge
 description: Strix Halo bootc image with the Arcane Edge Agent
 base-image: ghcr.io/ublue-os/ucore
 image-version: stable

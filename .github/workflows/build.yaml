@@ -36,12 +36,12 @@ jobs:
         include:
           - variant: base
             image: strix-halo-server
-          - variant: arcane
-            image: strix-halo-server-arcane
-          - variant: arcane-edge
-            image: strix-halo-server-arcane-edge
           - variant: arcane-manager
             image: strix-halo-server-arcane-manager
+          - variant: arcane-agent-edge
+            image: strix-halo-server-arcane-agent-edge
+          - variant: arcane-manager-direct
+            image: strix-halo-server-arcane-manager-direct
           - variant: ai-toolbox-cockpit
             image: strix-halo-server-ai-toolbox-cockpit
           - variant: lemonade

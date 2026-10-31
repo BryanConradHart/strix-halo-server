@@ -1,8 +1,8 @@
-# Strix Halo Server (Arcane)
+# Strix Halo Server (Arcane Manager Direct Agent)
 
-This image adds the Arcane Direct Agent to the clean Strix Halo image. Arcane can manage containers on this host through its Podman socket. Access to that socket is highly privileged, so expose the agent only on a trusted network and restrict access to TCP port `3553`.
+This image adds the Arcane Direct Agent to the clean Strix Halo image and connects it to an Arcane Manager. Arcane can manage containers on this host through its Podman socket. Access to that socket is highly privileged, so expose the agent only on a trusted network and restrict access to TCP port `3553`.
 
-Image: `ghcr.io/bryanconradhart/strix-halo-server-arcane`
+Image: `ghcr.io/bryanconradhart/strix-halo-server-arcane-manager-direct`
 
 ## Install
 
@@ -10,10 +10,10 @@ Choose the option that matches your starting point.
 
 ### 1. On a system that already has bootc
 
-Switch to the Arcane image and reboot:
+Switch to the Arcane Manager Direct Agent image and reboot:
 
 ```bash
-sudo bootc switch --transport registry ghcr.io/bryanconradhart/strix-halo-server-arcane:latest
+sudo bootc switch --transport registry ghcr.io/bryanconradhart/strix-halo-server-arcane-manager-direct:latest
 sudo systemctl reboot
 ```
 
@@ -31,7 +31,7 @@ sudo podman run --rm --privileged --pid=host --ipc=host \
   -v /var/lib/containers:/var/lib/containers \
   -v /dev:/dev \
   --security-opt label=type:unconfined_t \
-  ghcr.io/bryanconradhart/strix-halo-server-arcane:latest \
+  ghcr.io/bryanconradhart/strix-halo-server-arcane-manager-direct:latest \
   bootc install to-disk /dev/nvme0n1
 ```
 
@@ -43,9 +43,9 @@ Use the [BlueBuild CLI](https://blue-build.org/how-to/generate-iso/) to build an
 
 ```bash
 sudo bluebuild generate-iso \
-  --iso-name strix-halo-arcane.iso \
+  --iso-name strix-halo-arcane-manager-direct.iso \
   --platform linux/amd64 \
-  image ghcr.io/bryanconradhart/strix-halo-server-arcane:latest
+  image ghcr.io/bryanconradhart/strix-halo-server-arcane-manager-direct:latest
 ```
 
 Write the ISO to a USB drive using `dd` or a graphical flashing tool such as balenaEtcher or Rufus. For `dd`:
@@ -79,10 +79,10 @@ sudo systemctl reboot
 For a specific image build, switch to its versioned tag:
 
 ```bash
-sudo bootc switch --transport registry ghcr.io/bryanconradhart/strix-halo-server-arcane:vYYYY.MM.DD-HHMMSS-rRUN_NUMBER
+sudo bootc switch --transport registry ghcr.io/bryanconradhart/strix-halo-server-arcane-manager-direct:vYYYY.MM.DD-HHMMSS-rRUN_NUMBER
 sudo systemctl reboot
 ```
 
-Each build publishes a `latest` tag and a versioned tag in the form `vYYYY.MM.DD-HHMMSS-rRUN_NUMBER`. See the [published image page](https://github.com/BryanConradHart/strix-halo-server/pkgs/container/strix-halo-server-arcane) for available tags. Update the agent container through Arcane's environment update controls. For clean recovery, install the same image variant, create or restore the Arcane environment, then enter its token at the first-boot prompt.
+Each build publishes a `latest` tag and a versioned tag in the form `vYYYY.MM.DD-HHMMSS-rRUN_NUMBER`. See the [published image page](https://github.com/BryanConradHart/strix-halo-server/pkgs/container/strix-halo-server-arcane-manager-direct) for available tags. Update the agent container through Arcane's environment update controls. For clean recovery, install the same image variant, create or restore the Arcane environment, then enter its token at the first-boot prompt.
 
 Arcane manages containers through Podman's Docker-compatible API. It does not manage arbitrary host systemd services. See Arcane's [remote environment documentation](https://getarcane.app/docs/remote/environments) for Direct Agent networking and environment setup.

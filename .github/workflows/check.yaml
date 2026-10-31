@@ -14,9 +14,9 @@ jobs:
       matrix:
         variant:
           - base
-          - arcane
-          - arcane-edge
           - arcane-manager
+          - arcane-agent-edge
+          - arcane-manager-direct
           - ai-toolbox-cockpit
           - lemonade
     permissions:
