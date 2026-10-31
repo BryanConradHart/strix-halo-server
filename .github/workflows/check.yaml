@@ -7,8 +7,14 @@ on:
 
 jobs:
   verify-recipe:
-    name: Test compile BlueBuild recipe against PR branch
+    name: Verify ${{ matrix.variant }} image recipe
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        variant:
+          - base
+          - arcane
     permissions:
       contents: read
 
@@ -21,7 +27,8 @@ jobs:
       - name: Test build image
         uses: blue-build/github-action@v1
         with:
-          recipe: 'recipe.yaml'
+          recipe: 'recipe.yml'
+          working_directory: ./variants/${{ matrix.variant }}
           registry: ghcr.io
           registry_token: ${{ secrets.GITHUB_TOKEN }}
           cosign_private_key: ${{ secrets.COSIGN_PRIVATE_KEY }}

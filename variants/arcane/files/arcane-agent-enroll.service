@@ -1,0 +1,13 @@
+[Unit]
+Description=First-boot Arcane Agent enrollment
+ConditionPathExists=!/etc/arcane/agent.env
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/arcane-agent-enroll.sh
+TimeoutStartSec=7min
+
+[Install]
+WantedBy=multi-user.target
