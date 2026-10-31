@@ -1,6 +1,6 @@
 # Strix Halo Server (Lemonade)
 
-This image adds Lemonade Server, which provides local AI APIs for chat, coding, speech, image generation, and embeddings. It uses the AMD GPU devices and publishes the API on TCP port `13305`.
+This image packages [Lemonade Server](https://lemonade-server.ai/), an upstream local AI server providing APIs for chat, coding, speech, image generation, and embeddings. It uses the AMD GPU devices and publishes the API on TCP port `13305`.
 
 Image: `ghcr.io/bryanconradhart/strix-halo-server-lemonade`
 
@@ -57,4 +57,4 @@ sudo bootc switch --transport registry ghcr.io/bryanconradhart/strix-halo-server
 sudo systemctl reboot
 ```
 
-See the [published image page](https://github.com/BryanConradHart/strix-halo-server/pkgs/container/strix-halo-server-lemonade) for available tags. The server container follows the upstream stable image and is updated by Podman's automatic update service. See the [Lemonade Server documentation](https://lemonade-server.ai/docs/) for API use and model setup.
+See the [published image page](https://github.com/BryanConradHart/strix-halo-server/pkgs/container/strix-halo-server-lemonade) for available tags. The server container follows the upstream stable image and is updated by Podman's automatic update service. Consult the official [Lemonade Server documentation](https://lemonade-server.ai/docs/) for API use and model setup.

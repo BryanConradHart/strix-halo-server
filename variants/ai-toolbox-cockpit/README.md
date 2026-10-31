@@ -1,6 +1,6 @@
 # Strix Halo Server (AI Toolbox Cockpit)
 
-This image adds the AI Toolbox Cockpit interactive terminal app for managing AI toolboxes, models, and local inference servers. The app supports Strix Halo in its platform catalog and uses Podman and Distrobox for its container workflows.
+This image packages [AI Toolbox Cockpit](https://github.com/kyuz0/ai-toolbox-cockpit), an interactive terminal app authored by [kyuz0](https://github.com/kyuz0) for managing AI toolboxes, models, and local inference servers. The app supports Strix Halo in its platform catalog and uses Podman and Distrobox for its container workflows.
 
 Image: `ghcr.io/bryanconradhart/strix-halo-server-ai-toolbox-cockpit`
 
@@ -45,7 +45,7 @@ After signing in, run:
 ai-toolbox-cockpit
 ```
 
-The app is installed from a pinned upstream revision. It uses the signed-in user's Podman account to create and run toolboxes. See the [AI Toolbox Cockpit documentation](https://github.com/kyuz0/ai-toolbox-cockpit) for supported backends, models, and controls.
+The app is installed from a pinned upstream revision and uses the signed-in user's Podman account to create and run toolboxes. See the [upstream AI Toolbox Cockpit project](https://github.com/kyuz0/ai-toolbox-cockpit), authored by [kyuz0](https://github.com/kyuz0), for supported backends, models, and controls.
 
 ## Updates
 
