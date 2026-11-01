@@ -17,7 +17,7 @@ if ! manager_api_url=$(read_input "Arcane Manager API URL (for example https://a
   exit 0
 fi
 
-if ! agent_token=$(read_input "Arcane Agent token"); then
+if ! agent_token=$(read_input "Arcane Direct Agent token"); then
   exit 0
 fi
 
@@ -46,4 +46,4 @@ mv "$config_tmp" /etc/arcane/agent.env
 trap - EXIT
 
 systemctl start arcane-agent.service
-echo "Arcane Agent enrollment completed."
+echo "Arcane Direct Agent enrollment completed."

@@ -57,4 +57,4 @@ sudo bootc switch --transport registry ghcr.io/bryanconradhart/strix-halo-server
 sudo systemctl reboot
 ```
 
-See the [published image page](https://github.com/BryanConradHart/strix-halo-server/pkgs/container/strix-halo-server-arcane-agent-edge) for available tags. Update the agent container through Arcane Manager's environment controls. See the [Arcane Edge documentation](https://getarcane.app/docs/remote/environments) for network and environment setup.
+The host's daily Podman auto-update timer checks the agent's `latest` image and restarts the Quadlet when an updated image is available. You can also update the environment through Arcane Manager. Update the operating system image separately with `bootc upgrade`. See the [published image page](https://github.com/BryanConradHart/strix-halo-server/pkgs/container/strix-halo-server-arcane-agent-edge) for available tags and the [Arcane Edge documentation](https://getarcane.app/docs/remote/environments) for network and environment setup.

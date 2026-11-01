@@ -1,5 +1,5 @@
 name: strix-halo-server-arcane-manager-direct
-description: Strix Halo bootc image with the Arcane Manager Direct Agent
+description: Strix Halo bootc image with the Arcane Direct Agent
 base-image: ghcr.io/ublue-os/ucore
 image-version: stable
 
@@ -23,4 +23,5 @@ modules:
     system:
       enabled:
         - podman.socket
+        - podman-auto-update.timer
         - arcane-agent-enroll.service

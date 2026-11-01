@@ -23,4 +23,5 @@ modules:
     system:
       enabled:
         - podman.socket
+        - podman-auto-update.timer
         - arcane-edge-enroll.service
