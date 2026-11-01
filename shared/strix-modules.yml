@@ -8,12 +8,12 @@ modules:
       - "amdttm.page_pool_size=32505856"
       - "iommu=pt"
 
-  - type: rpm-ostree
+  - type: dnf
     install:
-      - mesa-vulkan-drivers
-      - clinfo
-      - rocminfo
-      - tuned
+      packages:
+        - mesa-vulkan-drivers
+        - clinfo
+        - rocminfo
 
   - type: systemd
     system:
