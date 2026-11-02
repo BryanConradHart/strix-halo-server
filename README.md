@@ -1,6 +1,6 @@
 # Strix Halo Server
 
-Preconfigured lightweight bootc-based Linux images for AMD Strix Halo systems, published to GHCR.
+Lightweight, reproducible bootc images for AMD Strix Halo systems, tuned for local AI, development, and self-hosted compute. They package the hardware-specific configuration and update through bootc, so you can get started without assembling and maintaining those pieces yourself. Choose the clean base or an optional workload-specific variant; all are published to GHCR.
 
 ## Available images
 
@@ -17,16 +17,7 @@ Preconfigured lightweight bootc-based Linux images for AMD Strix Halo systems, p
 
 Choose a variant from the table and copy its image reference. Use that image in one of the following options. After installation, visit the variant's README for any first-boot prompts and application-specific setup.
 
-### Before you begin: Secure Boot
-
-If Secure Boot is enabled, the Universal Blue signing key must be enrolled, regardless of installation method. Existing uCore users can verify enrollment:
-
-```bash
-sudo mokutil --sb-state
-sudo mokutil --test-key /etc/pki/akmods/certs/akmods-ublue.der
-```
-
-If it is not enrolled, follow uCore's [Secure Boot guide](https://projectucore.org/docs/secure-boot/). For a clean install, temporarily disable Secure Boot, install and boot the image, enroll the key at the machine's console, then re-enable Secure Boot. See uCore's [first-install guide](https://projectucore.org/docs/first-install/#before-you-begin).
+If Secure Boot is enabled, follow uCore's [Secure Boot guide](https://projectucore.org/docs/secure-boot/). For a clean install, temporarily disable it, install and switch to the selected image, enroll the key, then re-enable it.
 
 ### 1. Switch an existing bootc system
 
@@ -37,53 +28,32 @@ sudo bootc switch --transport registry IMAGE_FROM_TABLE:latest
 sudo systemctl reboot
 ```
 
-Check that the current system is bootc-managed with `sudo bootc status`. If you do not already have a bootc-managed system, use one of the clean-install options below and follow the chosen variant's README after installation.
+### 2. Bare-metal installation
 
-### 2. Clean install from a Linux live USB
+uCore installs with Butane and Ignition. The steps here make [uCore's installation guidance](https://projectucore.org/docs/first-install/#prepare-your-butane-configuration) less abstract by automatically filling in [its example Butane file](https://github.com/ublue-os/ucore/blob/main/examples/ucore-autorebase.butane) with the selected image and your credentials. If you prefer, you can instead write your own Butane configuration and generate the Ignition file following uCore's guide.
 
-Boot the target computer from a [Fedora Workstation live USB](https://fedoraproject.org/workstation/download/). In its terminal, install Podman if needed and use `lsblk` to identify the whole target disk:
+Download the x86_64 live ISO from the [Fedora CoreOS downloads](https://fedoraproject.org/coreos/download/?stream=stable#baremetal) page. Write the ISO image to a USB drive using [Fedora Media Writer](https://fedoraproject.org/workstation/download/) (Windows, macOS, or Linux), [Rufus](https://rufus.ie/) (Windows), or [balenaEtcher](https://etcher.balena.io/) (macOS or Linux). Writing the image erases the USB drive. Boot the target computer from that USB. Once Fedora CoreOS starts, open a terminal and connect to the internet. Then download and run the helper:
 
 ```bash
-sudo dnf install -y podman
+curl -fsSLO https://raw.githubusercontent.com/BryanConradHart/strix-halo-server/main/scripts/prepare-install-ignition.sh
+bash prepare-install-ignition.sh IMAGE_FROM_TABLE:latest
+```
+
+Replace `IMAGE_FROM_TABLE` with the image from the table. The helper prompts for the `core` account password. To enable remote SSH login, pass a public key as the optional second argument; the installed system will accept connections authenticated with its matching private key.
+
+Alternatively, write your own Butane configuration and compile it to `ucore-autorebase.ign` using [uCore's installation guide](https://projectucore.org/docs/first-install/#prepare-your-butane-configuration). If you start from uCore's sample, replace both image references with the selected image from the table.
+
+List disks and identify the target using its size and model:
+
+```bash
 lsblk -o NAME,PATH,SIZE,MODEL,TYPE,MOUNTPOINTS
 ```
 
-Replace `IMAGE_FROM_TABLE` with the selected image and `/dev/nvme0n1` with the whole-disk device (not a partition), then run:
+Before running the install command, replace `/dev/nvme0n1` with the target's whole-disk path from `lsblk` (for example, `/dev/sda` or `/dev/nvme0n1`), not a partition. **This erases all data on that disk. Verify the device path carefully.**
 
 ```bash
-sudo podman run --rm --privileged --pid=host --ipc=host \
-  -v /var/lib/containers:/var/lib/containers \
-  -v /dev:/dev \
-  --security-opt label=type:unconfined_t \
-  IMAGE_FROM_TABLE:latest \
-  bootc install to-disk /dev/nvme0n1
+sudo coreos-installer install /dev/nvme0n1 \
+  --ignition-file "$PWD/ucore-autorebase.ign"
 ```
 
-The live USB also appears in the `lsblk` output. **This erases the target disk, including all existing data.** Verify the device path carefully before running the command. After it completes, shut down, remove the live USB, and boot from the installed disk.
-
-### 3. Install from a locally built ISO
-
-Generate the ISO with the [BlueBuild CLI](https://github.com/blue-build/cli), using either a native installation:
-
-```bash
-sudo bluebuild generate-iso --iso-name strix-halo.iso image IMAGE_FROM_TABLE
-```
-
-Or, if you cannot install the CLI but have Docker, run it in a container:
-
-```bash
-docker run --rm \
-  --entrypoint bluebuild \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  -v "$PWD:$PWD" -v /tmp:/tmp -w "$PWD" \
-  ghcr.io/blue-build/cli:latest \
-  generate-iso --iso-name strix-halo.iso image IMAGE_FROM_TABLE
-```
-
-Replace `IMAGE_FROM_TABLE` with the selected image. The Docker option requires access to the Docker socket; BlueBuild uses it to run the privileged ISO builder. Flash the generated ISO to a USB drive and boot from it to install.
-
-## Project goals
-
-This project provides a lightweight, reproducible platform for Strix Halo systems, especially for local AI, inference, development, and self-hosted compute. Optional variants make common additions straightforward while keeping workload toolchains and custom services out of the clean base image.
-
-For custom images, start from the published variant closest to your use case, add only the required packages and configuration, and publish it under your own image name.
+Keep networking connected through the automatic first-boot setup and reboots. The system should then be running the selected Strix image; sign in as `core`.
