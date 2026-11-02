@@ -6,10 +6,6 @@ image-version: stable
 modules:
   - from-file: ../../../shared/strix-modules.yml
 
-  - type: rpm-ostree
-    install:
-      - openssl
-
   - type: files
     files:
       - source: arcane-manager-enroll.service

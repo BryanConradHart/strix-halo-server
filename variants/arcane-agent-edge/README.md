@@ -4,38 +4,7 @@ This image adds the Arcane Edge Agent to the clean Strix Halo image. The agent c
 
 Image: `ghcr.io/bryanconradhart/strix-halo-server-arcane-agent-edge`
 
-## Install
-
-Choose one of these methods:
-
-1. **Existing bootc system:** switch to this image and reboot:
-
-   ```bash
-   sudo bootc switch --transport registry ghcr.io/bryanconradhart/strix-halo-server-arcane-agent-edge:latest
-   sudo systemctl reboot
-   ```
-
-2. **Clean-disk install from a Linux live USB:** boot a [Fedora Workstation live USB](https://fedoraproject.org/workstation/download/), install Podman if needed, use `lsblk` to identify the whole target disk, then run:
-
-   ```bash
-   sudo dnf install -y podman
-   sudo podman run --rm --privileged --pid=host --ipc=host \
-     -v /var/lib/containers:/var/lib/containers -v /dev:/dev \
-     --security-opt label=type:unconfined_t \
-     ghcr.io/bryanconradhart/strix-halo-server-arcane-agent-edge:latest \
-     bootc install to-disk /dev/nvme0n1
-   ```
-
-   Replace `/dev/nvme0n1` with the whole-disk device, not a partition. **This erases that disk.** Verify the device before proceeding.
-
-3. **Install from a locally built ISO:** use the [BlueBuild CLI ISO instructions](https://blue-build.org/how-to/generate-iso/) with this image:
-
-   ```bash
-   sudo bluebuild generate-iso --iso-name strix-halo-arcane-agent-edge.iso --platform linux/amd64 \
-     image ghcr.io/bryanconradhart/strix-halo-server-arcane-agent-edge:latest
-   ```
-
-   Write the ISO to a USB drive, boot it, and follow the installer. Writing the ISO erases the USB drive.
+For installation, follow the shared instructions in the [root README](../../README.md). Complete the Arcane Edge Agent enrollment below after installing.
 
 ## First boot enrollment
 
@@ -57,4 +26,4 @@ sudo bootc switch --transport registry ghcr.io/bryanconradhart/strix-halo-server
 sudo systemctl reboot
 ```
 
-See the [published image page](https://github.com/BryanConradHart/strix-halo-server/pkgs/container/strix-halo-server-arcane-agent-edge) for available tags. Update the agent container through Arcane Manager's environment controls. See the [Arcane Edge documentation](https://getarcane.app/docs/remote/environments) for network and environment setup.
+The host's daily Podman auto-update timer checks the agent's `latest` image and restarts the Quadlet when an updated image is available. You can also update the environment through Arcane Manager. Update the operating system image separately with `bootc upgrade`. See the [published image page](https://github.com/BryanConradHart/strix-halo-server/pkgs/container/strix-halo-server-arcane-agent-edge) for available tags and the [Arcane Edge documentation](https://getarcane.app/docs/remote/environments) for network and environment setup.

@@ -6,11 +6,10 @@ image-version: stable
 modules:
   - from-file: ../../../shared/strix-modules.yml
 
-  - type: rpm-ostree
+  - type: dnf
     install:
-      - distrobox
-      - git-core
-      - pipx
+      packages:
+        - pipx
 
   - type: script
     snippets:

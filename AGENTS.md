@@ -9,6 +9,7 @@ This repository defines easy-to-maintain, easy-to-deploy bootable images for AMD
 - Build every image variant directly from the same uCore base and shared Strix configuration. Do not make a published variant a build prerequisite for another variant; build variants in parallel from the same source revision.
 - Keep variant-specific recipes, assets, and documentation together under `variants/<name>/`. Keep configuration common to all variants in a shared location, with one source of truth.
 - Enable uCore's rootful `podman-restart.service` in shared configuration so rootful Podman containers with an `always` restart policy restart at boot in every variant.
+- For rootful Quadlet services intended to track registry tags, set `AutoUpdate=registry` and enable `podman-auto-update.timer` in the variant; container image updates are separate from bootc OS updates.
 - Give each published image a distinct, identifiable name and provide a variant-specific README linked from the root README.
 - Provide assets optimized for 128 GB Strix Halo systems. Support for other Strix Halo memory configurations is not a requirement.
 - Make it straightforward to extend the system with workload-specific software, configuration, and services without complicating the default installation.
