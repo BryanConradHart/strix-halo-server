@@ -63,23 +63,24 @@ The live USB also appears in the `lsblk` output. **This erases the target disk, 
 
 ### 3. Install from a locally built ISO
 
-Use the [BlueBuild CLI ISO instructions](https://blue-build.org/how-to/generate-iso/) to build an ISO from the selected image:
+Generate the ISO with the [BlueBuild CLI](https://github.com/blue-build/cli), using either a native installation:
 
 ```bash
-sudo bluebuild generate-iso \
-  --iso-name strix-halo.iso \
-  --platform linux/amd64 \
-  image IMAGE_FROM_TABLE:latest
+sudo bluebuild generate-iso --iso-name strix-halo.iso image IMAGE_FROM_TABLE
 ```
 
-Replace `IMAGE_FROM_TABLE` with the selected image. Write the resulting `strix-halo.iso` to a USB drive using `dd` or a graphical flashing tool such as balenaEtcher or Rufus.
+Or, if you cannot install the CLI but have Docker, run it in a container:
 
-For `dd`:
 ```bash
-sudo dd if=./strix-halo.iso of=/dev/sdX bs=4M status=progress conv=fsync
+docker run --rm \
+  --entrypoint bluebuild \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v "$PWD:$PWD" -v /tmp:/tmp -w "$PWD" \
+  ghcr.io/blue-build/cli:latest \
+  generate-iso --iso-name strix-halo.iso image IMAGE_FROM_TABLE
 ```
 
-Replace `/dev/sdX` with the USB device (not a partition); writing the ISO erases that device. Boot the target computer from the USB drive and follow the installer's on-screen steps to install the image to the system disk.
+Replace `IMAGE_FROM_TABLE` with the selected image. The Docker option requires access to the Docker socket; BlueBuild uses it to run the privileged ISO builder. Flash the generated ISO to a USB drive and boot from it to install.
 
 ## Project goals
 
