@@ -11,6 +11,7 @@ modules:
   - type: dnf
     install:
       packages:
+        - bluez
         - mesa-vulkan-drivers
         - clinfo
         - rocminfo
@@ -19,6 +20,7 @@ modules:
     system:
       enabled:
         - podman-restart.service
+        - bluetooth.service
 
   - type: files
     files:

@@ -1,10 +1,21 @@
 # Strix Halo Server (Base)
 
-The clean Strix Halo image. It includes the shared 128 GB Strix hardware configuration, Mesa Vulkan drivers, `clinfo`, `rocminfo`, and the tuned performance profile setup. It does not include workload-specific software or the Arcane Agent.
+The clean Strix Halo image. It includes the shared 128 GB Strix hardware configuration, Wi-Fi and Bluetooth support, Mesa Vulkan drivers, `clinfo`, `rocminfo`, and the tuned performance profile setup. It does not include workload-specific software or the Arcane Agent.
 
 Image: `ghcr.io/bryanconradhart/strix-halo-server`
 
 For installation, follow the shared instructions in the [root README](../../README.md). After installation, this base image needs no variant-specific first-boot setup.
+
+## Wireless connectivity
+
+Wi-Fi is managed by NetworkManager. List nearby networks and connect with a password prompt:
+
+```bash
+nmcli device wifi list
+nmcli device wifi connect "NETWORK_NAME" --ask
+```
+
+Bluetooth support and device firmware are included, and `bluetooth.service` starts at boot. Use `bluetoothctl` to pair and connect Bluetooth devices.
 
 ## Updates
 

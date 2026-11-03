@@ -13,4 +13,4 @@ modules:
 
   - type: script
     snippets:
-      - pipx install --global "git+https://github.com/kyuz0/ai-toolbox-cockpit.git@e619c2cff5af4fa294cc1f7e1ed1590d7c505cb8"
+      - PIPX_GLOBAL_BIN_DIR=/usr/bin pipx install --global "git+https://github.com/kyuz0/ai-toolbox-cockpit.git"

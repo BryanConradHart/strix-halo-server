@@ -14,7 +14,7 @@ After signing in, run:
 ai-toolbox-cockpit
 ```
 
-The app is installed from a pinned upstream revision and uses the signed-in user's Podman account to create and run toolboxes. See the [upstream AI Toolbox Cockpit project](https://github.com/kyuz0/ai-toolbox-cockpit), authored by [kyuz0](https://github.com/kyuz0), for supported backends, models, and controls.
+The app is installed from the latest upstream revision available when the image is built and uses the signed-in user's Podman account to create and run toolboxes. Each published image tag identifies the app version included in that build. See the [upstream AI Toolbox Cockpit project](https://github.com/kyuz0/ai-toolbox-cockpit), authored by [kyuz0](https://github.com/kyuz0), for supported backends, models, and controls.
 
 ## Updates
 
@@ -32,4 +32,4 @@ sudo bootc switch --transport registry ghcr.io/bryanconradhart/strix-halo-server
 sudo systemctl reboot
 ```
 
-See the [published image page](https://github.com/BryanConradHart/strix-halo-server/pkgs/container/strix-halo-server-ai-toolbox-cockpit) for available tags. The Cockpit app version changes when this image recipe is updated to a newer upstream revision.
+See the [published image page](https://github.com/BryanConradHart/strix-halo-server/pkgs/container/strix-halo-server-ai-toolbox-cockpit) for available tags. New image builds install the latest upstream Cockpit revision available at build time.
