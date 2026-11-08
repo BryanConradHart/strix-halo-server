@@ -46,10 +46,10 @@ if ! manager_api_url=$(read_validated_input \
 fi
 
 if ! agent_token=$(read_validated_input \
-  "Arcane Direct Agent token" \
+  "Arcane Direct Agent token (shown as you type)" \
   '^arc_[[:alnum:]_-]+$' \
   "The Arcane token format is invalid" \
-  true); then
+  false); then
   exit 1
 fi
 
