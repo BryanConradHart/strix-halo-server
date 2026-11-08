@@ -15,9 +15,7 @@ Lightweight, reproducible bootc images for AMD Strix Halo systems, tuned for loc
 
 ## Install
 
-Choose a variant from the table and copy its image reference. Use that image in one of the following options. After installation, visit the variant's README for any first-boot prompts and application-specific setup.
-
-If Secure Boot is enabled, follow uCore's [Secure Boot guide](https://projectucore.org/docs/secure-boot/). For a clean install, temporarily disable it, install and switch to the selected image, enroll the key, then re-enable it.
+Choose a variant from the table and copy its image reference. Use that image in one of the following options. After installation, visit the variant's README for setup offered after login and application-specific instructions.
 
 ### 1. Switch an existing bootc system
 
@@ -30,30 +28,10 @@ sudo systemctl reboot
 
 ### 2. Bare-metal installation
 
-uCore installs with Butane and Ignition. The steps here make [uCore's installation guidance](https://projectucore.org/docs/first-install/#prepare-your-butane-configuration) less abstract by automatically filling in [its example Butane file](https://github.com/ublue-os/ucore/blob/main/examples/ucore-autorebase.butane) with the selected image and your credentials. If you prefer, you can instead write your own Butane configuration and generate the Ignition file following uCore's guide.
+Follow uCore's [official first-install instructions](https://projectucore.org/docs/first-install/) for preparing Butane and installing Fedora CoreOS. Use the same selected Strix Halo image and tag in both rebase stages, as described in uCore's guide; the first-boot process then rebases directly to that image.
 
-Download the x86_64 live ISO from the [Fedora CoreOS downloads](https://fedoraproject.org/coreos/download/?stream=stable#baremetal) page. Write the ISO image to a USB drive using [Fedora Media Writer](https://fedoraproject.org/workstation/download/) (Windows, macOS, or Linux), [Rufus](https://rufus.ie/) (Windows), or [balenaEtcher](https://etcher.balena.io/) (macOS or Linux). Writing the image erases the USB drive. Boot the target computer from that USB. Once Fedora CoreOS starts, open a terminal and connect to the internet. Then download and run the helper:
+We recommend booting the target machine into the [Fedora Workstation Live desktop](https://fedoraproject.org/workstation/download/). Its browser lets you read uCore's instructions and use our Butane utility, while its terminal includes Podman to run the [Fedora CoreOS installer container](https://docs.fedoraproject.org/en-US/fedora-coreos/bare-metal/#_installing_from_a_container) against the target disk. This keeps configuration and installation in one session, without needing to transfer the Butane file from another computer.
 
-```bash
-curl -fsSLO https://raw.githubusercontent.com/BryanConradHart/strix-halo-server/main/scripts/prepare-install-ignition.sh
-bash prepare-install-ignition.sh IMAGE_FROM_TABLE:latest
-```
+To prepare the Butane file, either edit the template linked from uCore's guide or use our [graphical Butane utility](https://bryanconradhart.github.io/strix-halo-server/install/), which helps select a Strix Halo variant and tag. Follow uCore's official instructions to apply the configuration and install.
 
-Replace `IMAGE_FROM_TABLE` with the image from the table. The helper prompts for the `core` account password. To enable remote SSH login, pass a public key as the optional second argument; the installed system will accept connections authenticated with its matching private key.
-
-Alternatively, write your own Butane configuration and compile it to `ucore-autorebase.ign` using [uCore's installation guide](https://projectucore.org/docs/first-install/#prepare-your-butane-configuration). If you start from uCore's sample, replace both image references with the selected image from the table.
-
-List disks and identify the target using its size and model:
-
-```bash
-lsblk -o NAME,PATH,SIZE,MODEL,TYPE,MOUNTPOINTS
-```
-
-Before running the install command, replace `/dev/nvme0n1` with the target's whole-disk path from `lsblk` (for example, `/dev/sda` or `/dev/nvme0n1`), not a partition. **This erases all data on that disk. Verify the device path carefully.**
-
-```bash
-sudo coreos-installer install /dev/nvme0n1 \
-  --ignition-file "$PWD/ucore-autorebase.ign"
-```
-
-Keep networking connected through the automatic first-boot setup and reboots. The system should then be running the selected Strix image; sign in as `core`.
+After installation, you may use `bootc` to switch to another variant as described in [Switch an existing bootc system](#1-switch-an-existing-bootc-system).

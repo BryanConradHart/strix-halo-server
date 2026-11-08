@@ -4,11 +4,29 @@ This image adds the Arcane Edge Agent to the clean Strix Halo image. The agent c
 
 Image: `ghcr.io/bryanconradhart/strix-halo-server-arcane-agent-edge`
 
-For installation, follow the shared instructions in the [root README](../../README.md). Complete the Arcane Edge Agent enrollment below after installing.
+Install this image using the shared [installation instructions](../../README.md), then enroll the Edge Agent as described below.
 
-## First boot enrollment
+## Enrollment after first login
 
-In Arcane Manager, add an **Edge** environment and generate the agent configuration. On first boot, enter the Manager URL and generated agent token when prompted. The token is stored only in a root-only file on the host and is not included in the image. If enrollment is skipped or times out, it is offered again at the next boot.
+In Arcane Manager, add an **Edge** environment and generate the agent configuration. After installing the image and signing in, enrollment is offered automatically if it has not been completed. The token is stored only in `/etc/arcane/agent.env` on the host, with root-only access; it is not included in the image.
+
+If you deferred enrollment, run it manually with:
+
+```bash
+sudo /usr/libexec/arcane-edge-enroll.sh
+```
+
+To replace the token or Manager URL, stop the agent, back up the current credentials, and run:
+
+```bash
+sudo systemctl stop arcane-edge-agent.service
+sudo mv /etc/arcane/agent.env /etc/arcane/agent.env.backup
+sudo /usr/libexec/arcane-edge-enroll.sh
+```
+
+The login setup offer appears only when `/etc/arcane/agent.env` is missing. Running the enrollment command manually replaces the file even if it already exists. Keep the backup private because it contains the token.
+
+If the agent cannot connect, check the Manager URL, outbound network access, and Arcane environment configuration.
 
 ## Updates
 

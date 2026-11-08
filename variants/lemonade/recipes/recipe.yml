@@ -10,10 +10,10 @@ modules:
     files:
       - source: lemonade-server.container
         destination: /usr/share/containers/systemd/lemonade-server.container
-      - source: lemonade-server-enroll.service
-        destination: /usr/lib/systemd/system/lemonade-server-enroll.service
       - source: lemonade-server-enroll.sh
         destination: /usr/libexec/lemonade-server-enroll.sh
+      - source: 90-lemonade-setup-notice.sh
+        destination: /etc/profile.d/90-lemonade-setup-notice.sh
 
   - type: script
     snippets:
@@ -24,4 +24,3 @@ modules:
       enabled:
         - podman.socket
         - podman-auto-update.timer
-        - lemonade-server-enroll.service

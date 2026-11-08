@@ -1,4 +1,5 @@
 /variants/*/files/strix-first-boot.service
 /variants/*/files/strix-first-boot.sh
+/variants/*/files/strix-halo-server-cosign.pub
 /variants/*/.gitignore
 /variants/*/.bluebuild-scripts_*

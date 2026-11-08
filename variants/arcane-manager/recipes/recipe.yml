@@ -8,10 +8,10 @@ modules:
 
   - type: files
     files:
-      - source: arcane-manager-enroll.service
-        destination: /usr/lib/systemd/system/arcane-manager-enroll.service
       - source: arcane-manager-enroll.sh
         destination: /usr/libexec/arcane-manager-enroll.sh
+      - source: 90-arcane-manager-setup-notice.sh
+        destination: /etc/profile.d/90-arcane-manager-setup-notice.sh
       - source: arcane-manager.container
         destination: /usr/share/containers/systemd/arcane-manager.container
 
@@ -24,4 +24,3 @@ modules:
       enabled:
         - podman.socket
         - podman-auto-update.timer
-        - arcane-manager-enroll.service

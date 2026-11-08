@@ -4,13 +4,25 @@ This image adds Arcane Manager for administering local and remote container envi
 
 Image: `ghcr.io/bryanconradhart/strix-halo-server-arcane-manager`
 
-For installation, follow the shared instructions in the [root README](../../README.md). Complete the Arcane Manager first-boot setup below after installing.
+Install this image using the shared [installation instructions](../../README.md), then complete the Arcane Manager setup below.
 
-## First boot
+## Setup after first login
 
-Enter the URL that administrators will use to reach Arcane Manager. The image generates an encryption key and stores it with the URL in a root-only host file; neither is included in the image. Open the URL you entered during setup (the default direct connection is `http://<host>:3552`), sign in with the initial credentials `arcane` / `arcane-admin`, and change the password. Use a trusted network and HTTPS through a reverse proxy when accessing the manager remotely.
+After installing the image and signing in, setup is offered automatically if it has not been completed. It configures the URL administrators will use to reach Arcane Manager.
 
-The manager's data and projects persist across operating-system updates. Back up `/etc/arcane/manager.env` together with Arcane's data if you need to restore the manager.
+The setup creates an encryption key and saves it with the URL in `/etc/arcane/manager.env`, a root-only host file. Back up this file together with Arcane's data. The login offer is suppressed if the file exists.
+
+Open the configured URL (direct access is `http://<host>:3552`), sign in with the initial credentials `arcane` / `arcane-admin`, and change the password. Restrict access to trusted administrators; use HTTPS through a reverse proxy when accessing the manager remotely.
+
+If you need to change the URL after setup, edit `APP_URL` in `/etc/arcane/manager.env` with `sudoedit`, keep the existing `ENCRYPTION_KEY` unchanged, then restart the manager:
+
+```bash
+sudo systemctl restart arcane-manager.service
+```
+
+Do not rerun the setup script after setup: it generates a new encryption key, which can make existing manager data inaccessible.
+
+The manager's data and projects persist across operating-system updates.
 
 ## Updates
 
