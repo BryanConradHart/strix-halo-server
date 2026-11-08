@@ -7,6 +7,8 @@ The existing image reference retains its historical `arcane-manager-direct` name
 
 Install this image using the shared [installation instructions](../../README.md), then enroll the Direct Agent as described below.
 
+For a bare-metal installation, the [Butane setup builder](https://bryanconradhart.github.io/strix-halo-server/install/?variant=arcane-manager-direct) lets you choose between the interactive setup after login (the default) and provisioning during installation. Choose Butane provisioning to require the Direct Agent token and Manager API URL. Keep the generated Butane file private.
+
 ## Enrollment after first login
 
 1. In Arcane Manager, add a **Direct** environment for this host and note the generated `AGENT_TOKEN` and `MANAGER_API_URL`. The Manager URL should be reachable by the agent host.

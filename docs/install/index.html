@@ -34,6 +34,9 @@
     button, .button { cursor: pointer; font-weight: 700; }
     .button { display: block; text-align: center; text-decoration: none; }
     .card { border: 1px solid var(--border); border-radius: 0.5rem; padding: 1rem; margin: 1rem 0; }
+    .input-toggle { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.35rem; }
+    .input-toggle input { flex: 1; min-width: 0; width: auto; margin-top: 0; }
+    .input-toggle button { flex: none; width: auto; margin-top: 0; }
     .hint { color: color-mix(in srgb, currentColor 75%, transparent); }
     .warning { border-left: 4px solid #d88b00; padding-left: 0.8rem; }
     code, pre { background: var(--surface); border-radius: 0.25rem; }
@@ -45,13 +48,13 @@
 <body>
   <main>
     <h1>Strix Halo Server bare-metal setup</h1>
-    <p>This form creates the Butane configuration to install Fedora CoreOS and automatically rebase it to the Strix Halo image you select here, using uCore's supported first-install bootstrap.</p>
+    <p>This form creates the Butane configuration to install Fedora CoreOS and automatically rebase it to the Strix Halo image you select here, using uCore's supported first-install bootstrap. For supported variants, it can also provision the same first-boot application settings as the variant setup scripts.</p>
 
     <section class="card">
       <h2>Before you begin</h2>
-      <p>Prepare a SHA-512 password hash on this computer. In a terminal, run <code>openssl passwd -6</code>, enter your chosen password when prompted, then copy the resulting hash into the form. Do not enter your plain-text password here.</p>
+      <p>You can enter an existing SHA-512 password hash or switch to password entry; in password mode, the page creates a salted SHA-512-crypt hash locally in your browser. The password is not sent to a server, stored, or logged.</p>
       <p>SSH login is optional. You can paste multiple public keys or upload multiple files containing public keys. Never enter or upload a private key.</p>
-      <p>All values and uploaded key contents stay in this browser session. The page does not submit, transmit, store, or log them; it only fetches the shared Butane template. The page has no analytics or form-submission endpoint. The downloaded Butane file contains account access information; keep it private.</p>
+      <p>Variant settings are optional. Arcane Manager's encryption key can be generated in this browser or entered manually. All values and uploaded key contents stay in this browser session. The page does not submit, transmit, store, or log them; it only fetches the shared Butane template. The page has no analytics or form-submission endpoint. The downloaded Butane file contains account access information and variant credentials; keep it private.</p>
     </section>
 
     <form id="installer-form">
@@ -65,12 +68,51 @@
         <option value="ghcr.io/bryanconradhart/strix-halo-server-lemonade">Lemonade Server</option>
       </select>
 
+      <section id="variant-settings" class="card" hidden>
+        <h2 id="variant-title">Variant setup</h2>
+        <p id="variant-description"></p>
+        <label for="variant-provision-mode">Variant setup timing</label>
+        <select id="variant-provision-mode">
+          <option value="login">Set up interactively after login</option>
+          <option value="butane">Provision setup with this Butane configuration</option>
+        </select>
+        <p id="variant-provision-hint" class="hint">The variant setup script will prompt for its required values the first time you sign in.</p>
+        <div id="manager-fields" hidden>
+          <label for="manager-url">Arcane Manager URL</label>
+          <input id="manager-url" type="url" autocomplete="url" placeholder="https://arcane.example.com">
+          <label for="manager-key-mode">Encryption key</label>
+          <select id="manager-key-mode">
+            <option value="generate">Generate a random key in this browser</option>
+            <option value="manual">Enter a key manually</option>
+          </select>
+          <div id="manager-key-entry" hidden>
+            <label for="manager-key">Arcane Manager encryption key (64 hexadecimal characters)</label>
+            <input id="manager-key" type="password" autocomplete="off" spellcheck="false" minlength="64" maxlength="64" pattern="[A-Fa-f0-9]{64}">
+          </div>
+        </div>
+        <div id="agent-fields" hidden>
+          <label for="agent-manager-url">Arcane Manager API URL</label>
+          <input id="agent-manager-url" type="url" autocomplete="url" placeholder="https://arcane.example.com">
+          <label for="agent-token">Arcane Agent token (shown as you type)</label>
+          <input id="agent-token" autocomplete="off" spellcheck="false" pattern="arc_[A-Za-z0-9_-]+">
+        </div>
+        <div id="lemonade-fields" hidden>
+          <label for="lemonade-key">Lemonade API key (at least 32 letters, numbers, underscores, or hyphens)</label>
+          <input id="lemonade-key" autocomplete="off" spellcheck="false" minlength="32" pattern="[A-Za-z0-9_-]{32,}">
+        </div>
+      </section>
+
       <label for="tag">Image tag</label>
       <input id="tag" name="tag" value="latest" maxlength="128" pattern="[A-Za-z0-9][A-Za-z0-9._-]{0,127}" required>
       <p class="hint">Use <code>latest</code> for the newest build or enter a version tag such as <code>vYYYY.MM.DD-HHMMSS-rRUN_NUMBER</code>.</p>
 
-      <label for="password-hash">Password hash for the <code>core</code> account</label>
-      <input id="password-hash" type="password" autocomplete="off" spellcheck="false" required>
+      <label id="password-label" for="password-hash">SHA-512 password hash for the <code>core</code> account</label>
+      <div class="input-toggle">
+        <input id="password-hash" type="password" autocomplete="off" spellcheck="false" required>
+        <input id="password-input" type="password" autocomplete="off" spellcheck="false" maxlength="1024" hidden>
+        <button id="password-mode" type="button" aria-pressed="false">Enter a password instead</button>
+      </div>
+      <p id="password-hint" class="hint">Paste a hash from <code>openssl passwd -6</code>, or choose password entry to have this page create one locally.</p>
 
       <label for="ssh-keys">SSH public keys (optional; one per line)</label>
       <textarea id="ssh-keys" autocomplete="off" spellcheck="false" placeholder="ssh-ed25519 AAAA..."></textarea>
@@ -102,6 +144,27 @@
       const result = document.querySelector("#result");
       const download = document.querySelector("#download");
       const butaneOutput = document.querySelector("#butane-output");
+      const imageSelect = document.querySelector("#image");
+      const variantSettings = document.querySelector("#variant-settings");
+      const variantTitle = document.querySelector("#variant-title");
+      const variantDescription = document.querySelector("#variant-description");
+      const variantProvisionMode = document.querySelector("#variant-provision-mode");
+      const variantProvisionHint = document.querySelector("#variant-provision-hint");
+      const managerFields = document.querySelector("#manager-fields");
+      const agentFields = document.querySelector("#agent-fields");
+      const lemonadeFields = document.querySelector("#lemonade-fields");
+      const managerKeyMode = document.querySelector("#manager-key-mode");
+      const managerKeyEntry = document.querySelector("#manager-key-entry");
+      const managerKey = document.querySelector("#manager-key");
+      const managerUrl = document.querySelector("#manager-url");
+      const agentManagerUrl = document.querySelector("#agent-manager-url");
+      const agentToken = document.querySelector("#agent-token");
+      const lemonadeKey = document.querySelector("#lemonade-key");
+      const passwordLabel = document.querySelector("#password-label");
+      const passwordHashInput = document.querySelector("#password-hash");
+      const passwordInput = document.querySelector("#password-input");
+      const passwordModeButton = document.querySelector("#password-mode");
+      const passwordHint = document.querySelector("#password-hint");
       const allowedImages = new Set([
         "ghcr.io/bryanconradhart/strix-halo-server",
         "ghcr.io/bryanconradhart/strix-halo-server-arcane-manager",
@@ -114,6 +177,255 @@
 
       const yamlQuote = (value) => `'${value.replaceAll("'", "''")}'`;
 
+      const concatBytes = (...arrays) => {
+        const output = new Uint8Array(arrays.reduce((length, array) => length + array.length, 0));
+        let offset = 0;
+        for (const array of arrays) {
+          output.set(array, offset);
+          offset += array.length;
+        }
+        return output;
+      };
+
+      const repeatBytes = (source, length) => {
+        const output = new Uint8Array(length);
+        for (let index = 0; index < length; index += 1) {
+          output[index] = source[index % source.length];
+        }
+        return output;
+      };
+
+      const sha512Crypt = async (password) => {
+        const passwordBytes = new TextEncoder().encode(password);
+        if (passwordBytes.length === 0 || passwordBytes.length > 1024) {
+          throw new Error("Enter a password between 1 and 1024 UTF-8 bytes.");
+        }
+        const saltAlphabet = "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+        const saltRandom = crypto.getRandomValues(new Uint8Array(8));
+        const salt = Array.from(saltRandom, (byte) => saltAlphabet[byte & 63]).join("");
+        const saltBytes = new TextEncoder().encode(salt);
+        const digest = async (...parts) => new Uint8Array(await crypto.subtle.digest("SHA-512", concatBytes(...parts)));
+
+        const alternate = await digest(passwordBytes, saltBytes, passwordBytes);
+        const initialParts = [passwordBytes, saltBytes];
+        for (let remaining = passwordBytes.length; remaining > 0; remaining -= alternate.length) {
+          initialParts.push(alternate.slice(0, Math.min(remaining, alternate.length)));
+        }
+        for (let length = passwordBytes.length; length > 0; length = Math.floor(length / 2)) {
+          initialParts.push(length & 1 ? alternate : passwordBytes);
+        }
+        let current = await digest(...initialParts);
+
+        const passwordDigestParts = [];
+        for (let index = 0; index < passwordBytes.length; index += 1) {
+          passwordDigestParts.push(passwordBytes);
+        }
+        const passwordSequence = repeatBytes(await digest(...passwordDigestParts), passwordBytes.length);
+
+        const saltDigestParts = [];
+        for (let index = 0; index < 16 + current[0]; index += 1) {
+          saltDigestParts.push(saltBytes);
+        }
+        const saltSequence = repeatBytes(await digest(...saltDigestParts), saltBytes.length);
+
+        for (let round = 0; round < 5000; round += 1) {
+          const parts = [round & 1 ? passwordSequence : current];
+          if (round % 3 !== 0) parts.push(saltSequence);
+          if (round % 7 !== 0) parts.push(passwordSequence);
+          parts.push(round & 1 ? current : passwordSequence);
+          current = await digest(...parts);
+        }
+
+        const cryptAlphabet = "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+        const encode24 = (first, second, third, count = 4) => {
+          let value = (first << 16) | (second << 8) | third;
+          let encoded = "";
+          for (let index = 0; index < count; index += 1) {
+            encoded += cryptAlphabet[value & 63];
+            value >>= 6;
+          }
+          return encoded;
+        };
+        const order = [
+          [0, 21, 42], [22, 43, 1], [44, 2, 23], [3, 24, 45],
+          [25, 46, 4], [47, 5, 26], [6, 27, 48], [28, 49, 7],
+          [50, 8, 29], [9, 30, 51], [31, 52, 10], [53, 11, 32],
+          [12, 33, 54], [34, 55, 13], [56, 14, 35], [15, 36, 57],
+          [37, 58, 16], [59, 17, 38], [18, 39, 60], [40, 61, 19],
+          [62, 20, 41],
+        ];
+        const checksum = order.map(([first, second, third]) => encode24(current[first], current[second], current[third])).join("")
+          + encode24(0, 0, current[63], 2);
+        passwordBytes.fill(0);
+        return `$6$${salt}$${checksum}`;
+      };
+
+      const variants = {
+        "ghcr.io/bryanconradhart/strix-halo-server-arcane-manager": {
+          name: "Arcane Manager",
+          description: "Creates /etc/arcane/manager.env and enables the Arcane Manager service.",
+          type: "manager",
+          service: "arcane-manager.service",
+          file: "/etc/arcane/manager.env",
+          directories: [
+            { path: "/etc/arcane", mode: 448, user: "root", group: "root" },
+            { path: "/var/home/core/arcane-projects", mode: 488, user: "core", group: "core" },
+          ],
+          environment: (values) => `APP_URL=${values.url}\nENCRYPTION_KEY=${values.key}`,
+        },
+        "ghcr.io/bryanconradhart/strix-halo-server-arcane-agent-edge": {
+          name: "Arcane Edge Agent",
+          description: "Creates /etc/arcane/agent.env and enables the Arcane Edge Agent service.",
+          type: "agent",
+          service: "arcane-edge-agent.service",
+          file: "/etc/arcane/agent.env",
+          directories: [{ path: "/etc/arcane", mode: 448, user: "root", group: "root" }],
+          environment: (values) => `AGENT_TOKEN=${values.token}\nMANAGER_API_URL=${values.url}`,
+        },
+        "ghcr.io/bryanconradhart/strix-halo-server-arcane-manager-direct": {
+          name: "Arcane Direct Agent",
+          description: "Creates /etc/arcane/agent.env and enables the Arcane Direct Agent service.",
+          type: "agent",
+          service: "arcane-agent.service",
+          file: "/etc/arcane/agent.env",
+          directories: [{ path: "/etc/arcane", mode: 448, user: "root", group: "root" }],
+          environment: (values) => `AGENT_TOKEN=${values.token}\nMANAGER_API_URL=${values.url}`,
+        },
+        "ghcr.io/bryanconradhart/strix-halo-server-lemonade": {
+          name: "Lemonade Server",
+          description: "Creates /etc/lemonade/server.env and enables Lemonade Server.",
+          type: "lemonade",
+          service: "lemonade-server.service",
+          file: "/etc/lemonade/server.env",
+          directories: [{ path: "/etc/lemonade", mode: 448, user: "root", group: "root" }],
+          environment: (values) => `LEMONADE_API_KEY=${values.key}`,
+        },
+      };
+
+      const updateVariantFields = () => {
+        const variant = variants[imageSelect.value];
+        const provisionWithButane = Boolean(variant) && variantProvisionMode.value === "butane";
+        variantSettings.hidden = !variant;
+        managerFields.hidden = !provisionWithButane || variant?.type !== "manager";
+        agentFields.hidden = !provisionWithButane || variant?.type !== "agent";
+        lemonadeFields.hidden = !provisionWithButane || variant?.type !== "lemonade";
+        if (variant) {
+          variantTitle.textContent = `${variant.name} setup`;
+          variantDescription.textContent = variant.description;
+        }
+        const manager = provisionWithButane && variant?.type === "manager";
+        const agent = provisionWithButane && variant?.type === "agent";
+        const lemonade = provisionWithButane && variant?.type === "lemonade";
+        variantProvisionHint.textContent = provisionWithButane
+          ? "Complete every required field below to include the variant setup in this configuration."
+          : "The variant setup script will prompt for its required values the first time you sign in.";
+        managerUrl.disabled = !manager;
+        managerUrl.required = manager;
+        managerKeyMode.disabled = !manager;
+        managerKeyEntry.hidden = !manager || managerKeyMode.value !== "manual";
+        managerKey.disabled = !manager || managerKeyMode.value !== "manual";
+        managerKey.required = manager && managerKeyMode.value === "manual";
+        agentManagerUrl.disabled = !agent;
+        agentManagerUrl.required = agent;
+        agentToken.disabled = !agent;
+        agentToken.required = agent;
+        lemonadeKey.disabled = !lemonade;
+        lemonadeKey.required = lemonade;
+      };
+
+      const urlPattern = /^https?:\/\/[^\s#\\"]+$/;
+      const variantYaml = (variant, values) => {
+        const fileLines = [
+          "directories:",
+          ...variant.directories.flatMap((directory) => [
+            `  - path: ${directory.path}`,
+            `    mode: ${directory.mode}`,
+            "    user:",
+            `      name: ${directory.user}`,
+            "    group:",
+            `      name: ${directory.group}`,
+          ]),
+          "files:",
+          `  - path: ${variant.file}`,
+          "    mode: 384",
+          "    user:",
+          "      name: root",
+          "    group:",
+          "      name: root",
+          "    contents:",
+          "      inline: |",
+          ...variant.environment(values).split("\n").map((line) => `        ${line}`),
+        ];
+        return {
+          storage: fileLines.map((line) => `  ${line}`).join("\n"),
+          systemd: `    - name: ${variant.service}\n      enabled: true`,
+        };
+      };
+
+      const getVariantValues = (variant) => {
+        if (variant.type === "manager") {
+          const url = document.querySelector("#manager-url").value.trim();
+          if (!urlPattern.test(url)) {
+            throw new Error("Enter a valid Arcane Manager URL using http:// or https:// without spaces, quotes, backslashes, or fragments.");
+          }
+          let key;
+          if (managerKeyMode.value === "generate") {
+            key = Array.from(crypto.getRandomValues(new Uint8Array(32)), (byte) => byte.toString(16).padStart(2, "0")).join("");
+          } else {
+            key = managerKey.value.trim();
+            if (!/^[A-Fa-f0-9]{64}$/.test(key)) {
+              throw new Error("Enter an Arcane Manager encryption key of exactly 64 hexadecimal characters.");
+            }
+          }
+          return { url, key };
+        }
+        if (variant.type === "agent") {
+          const url = document.querySelector("#agent-manager-url").value.trim();
+          const token = document.querySelector("#agent-token").value.trim();
+          if (!urlPattern.test(url)) {
+            throw new Error("Enter a valid Arcane Manager API URL using http:// or https:// without spaces, quotes, backslashes, or fragments.");
+          }
+          if (!/^arc_[A-Za-z0-9_-]+$/.test(token)) {
+            throw new Error("Enter a valid Arcane Agent token beginning with arc_.");
+          }
+          return { url, token };
+        }
+        const key = document.querySelector("#lemonade-key").value.trim();
+        if (!/^[A-Za-z0-9_-]{32,}$/.test(key)) {
+          throw new Error("The Lemonade API key must be at least 32 letters, numbers, underscores, or hyphens.");
+        }
+        return { key };
+      };
+
+      imageSelect.addEventListener("change", updateVariantFields);
+      variantProvisionMode.addEventListener("change", updateVariantFields);
+      managerKeyMode.addEventListener("change", updateVariantFields);
+      let passwordEntryMode = false;
+      passwordModeButton.addEventListener("click", () => {
+        passwordEntryMode = !passwordEntryMode;
+        passwordHashInput.hidden = passwordEntryMode;
+        passwordHashInput.required = !passwordEntryMode;
+        passwordInput.hidden = !passwordEntryMode;
+        passwordInput.required = passwordEntryMode;
+        passwordLabel.htmlFor = passwordEntryMode ? "password-input" : "password-hash";
+        passwordLabel.textContent = passwordEntryMode
+          ? "Password for the core account (hashed locally)"
+          : "SHA-512 password hash for the core account";
+        passwordModeButton.textContent = passwordEntryMode ? "Enter a hash instead" : "Enter a password instead";
+        passwordModeButton.setAttribute("aria-pressed", String(passwordEntryMode));
+        passwordHint.textContent = passwordEntryMode
+          ? "The password is hashed in this browser using SHA-512-crypt (5000 rounds) and a random salt. Maximum length: 1024 UTF-8 bytes."
+          : "Paste a hash from openssl passwd -6, or choose password entry to have this page create one locally.";
+      });
+      const requestedVariant = new URLSearchParams(location.search).get("variant");
+      if (requestedVariant) {
+        const image = `ghcr.io/bryanconradhart/strix-halo-server-${requestedVariant}`;
+        if (allowedImages.has(image)) {
+          imageSelect.value = image;
+        }
+      }
+      updateVariantFields();
+
       form.addEventListener("submit", async (event) => {
         event.preventDefault();
         status.textContent = "";
@@ -122,7 +434,8 @@
         const image = document.querySelector("#image").value;
         const tag = document.querySelector("#tag").value.trim();
         const imageReference = `${image}:${tag}`;
-        const passwordHash = document.querySelector("#password-hash").value.trim();
+        const variant = variants[image];
+        let passwordHash = passwordHashInput.value.trim();
         const pastedKeys = document.querySelector("#ssh-keys").value.split(/\r?\n/);
         const keyFiles = Array.from(document.querySelector("#ssh-key-files").files);
         let sshKeys;
@@ -146,14 +459,34 @@
           status.textContent = "Enter a valid image tag.";
           return;
         }
+        if (passwordEntryMode) {
+          try {
+            status.textContent = "Hashing the password locally in this browser...";
+            passwordHash = await sha512Crypt(passwordInput.value);
+            status.textContent = "";
+          } catch (error) {
+            status.textContent = error instanceof Error ? error.message : "Could not hash the password in this browser.";
+            return;
+          }
+        }
         if (!/^\$6\$[A-Za-z0-9./]{1,16}\$[A-Za-z0-9./]{86}$/.test(passwordHash)) {
-          status.textContent = "Enter a SHA-512 password hash beginning with $6$ (generated by openssl passwd -6).";
+          status.textContent = "Enter a valid SHA-512-crypt password hash beginning with $6$ (generated by openssl passwd -6).";
           return;
         }
         const validPublicKey = /^(ssh-(ed25519|rsa)|ecdsa-sha2-nistp(256|384|521)|sk-ssh-ed25519|sk-ecdsa-sha2-nistp256) [A-Za-z0-9+/]+={0,3}( .*)?$/;
         if (sshKeys.some((key) => !validPublicKey.test(key))) {
           status.textContent = "Each non-empty line or uploaded file entry must be a valid SSH public key.";
           return;
+        }
+
+        let variantFragments = { storage: "", systemd: "" };
+        if (variant && variantProvisionMode.value === "butane") {
+          try {
+            variantFragments = variantYaml(variant, getVariantValues(variant));
+          } catch (error) {
+            status.textContent = error instanceof Error ? error.message : "Could not validate variant settings.";
+            return;
+          }
         }
 
         try {
@@ -181,6 +514,13 @@
             butane = butane.replace(`      ssh_authorized_keys:\n${sshKeyPlaceholder}\n`, "");
           }
 
+          if (!butane.includes("YOUR_VARIANT_STORAGE_HERE") || !butane.includes("YOUR_VARIANT_SYSTEMD_HERE")) {
+            throw new Error("The uCore Butane template is missing its variant setup placeholders.");
+          }
+          butane = butane
+            .replace("  YOUR_VARIANT_STORAGE_HERE", variantFragments.storage)
+            .replace("    YOUR_VARIANT_SYSTEMD_HERE", variantFragments.systemd);
+
           if (butane.includes("YOUR_")) {
             throw new Error("The generated configuration still contains an unfilled placeholder.");
           }
@@ -192,6 +532,7 @@
           previousUrl = URL.createObjectURL(blob);
           download.href = previousUrl;
           butaneOutput.value = butane;
+          passwordInput.value = "";
           result.hidden = false;
         } catch (error) {
           status.textContent = error instanceof Error ? error.message : "Could not generate the configuration.";

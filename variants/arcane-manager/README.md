@@ -6,6 +6,8 @@ Image: `ghcr.io/bryanconradhart/strix-halo-server-arcane-manager`
 
 Install this image using the shared [installation instructions](../../README.md), then complete the Arcane Manager setup below.
 
+For a bare-metal installation, the [Butane setup builder](https://bryanconradhart.github.io/strix-halo-server/install/?variant=arcane-manager) lets you choose between the interactive setup after login (the default) and provisioning during installation. Choose Butane provisioning to make the Manager URL and encryption key choice required; the key can be generated in-browser or entered manually. Keep the generated Butane file private.
+
 ## Setup after first login
 
 After installing the image and signing in, setup is offered automatically if it has not been completed. It configures the URL administrators will use to reach Arcane Manager.

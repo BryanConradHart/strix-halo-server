@@ -6,6 +6,8 @@ Image: `ghcr.io/bryanconradhart/strix-halo-server-lemonade`
 
 Install this image using the shared [installation instructions](../../README.md), then configure the Lemonade API key as described below.
 
+For a bare-metal installation, the [Butane setup builder](https://bryanconradhart.github.io/strix-halo-server/install/?variant=lemonade) lets you choose between the interactive setup after login (the default) and provisioning during installation. Choose Butane provisioning to require the Lemonade API key. Keep the generated Butane file private.
+
 ## Setup after first login
 
 After installing the image and signing in, setup is offered automatically if it has not been completed. The API key is stored in `/etc/lemonade/server.env` with root-only access; it is not included in the image. Keep it available for clients connecting to `http://<host>:13305`; provide it as the client's API key. Model and server data persist across operating-system updates.
