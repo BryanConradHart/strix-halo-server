@@ -1,14 +1,34 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if ! app_url=$(systemd-ask-password --timeout=180 "Arcane Manager URL (for example https://arcane.example.com)"); then
-  echo "Arcane Manager setup was skipped or timed out. It will be offered again at the next boot." >&2
-  exit 0
-fi
+read_validated_input() {
+  local prompt=$1
+  local pattern=$2
+  local error_message=$3
+  local value
+
+  for attempt in 1 2 3; do
+    if IFS= read -r -p "$prompt: " value; then
+      if [[ "$value" =~ $pattern ]]; then
+        printf '%s' "$value"
+        return 0
+      fi
+      echo "$error_message (attempt $attempt of 3)." >&2
+    else
+      printf '\n' >&2
+      echo "No response received (attempt $attempt of 3)." >&2
+    fi
+  done
+
+  echo "Setup stopped after 3 attempts. Rerun this command to try again." >&2
+  return 1
+}
 
 url_pattern='^https?://[^[:space:]#\\"]+$'
-if [[ ! "$app_url" =~ $url_pattern ]]; then
-  echo "The Manager URL must start with http:// or https:// and contain no spaces, quotes, backslashes, or fragments."
+if ! app_url=$(read_validated_input \
+  "Arcane Manager URL (for example https://arcane.example.com)" \
+  "$url_pattern" \
+  "The Manager URL must start with http:// or https:// and contain no spaces, quotes, backslashes, or fragments"); then
   exit 1
 fi
 

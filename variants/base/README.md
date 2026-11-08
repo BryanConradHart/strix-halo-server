@@ -4,11 +4,11 @@ The clean Strix Halo image. It includes the shared 128 GB Strix hardware configu
 
 Image: `ghcr.io/bryanconradhart/strix-halo-server`
 
-For installation, follow the shared instructions in the [root README](../../README.md). After installation, this base image needs no variant-specific first-boot setup.
+Install this image using the shared [installation instructions](../../README.md). The base image has no interactive first-boot script or additional variant setup.
 
 ## Wireless connectivity
 
-Wi-Fi is managed by NetworkManager. List nearby networks and connect with a password prompt:
+Wi-Fi is managed by NetworkManager. To connect or change networks, list nearby networks and connect with a password prompt; NetworkManager retains the connection, so there is no setup script to rerun:
 
 ```bash
 nmcli device wifi list

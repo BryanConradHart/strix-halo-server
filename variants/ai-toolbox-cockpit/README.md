@@ -4,7 +4,7 @@ This image packages [AI Toolbox Cockpit](https://github.com/kyuz0/ai-toolbox-coc
 
 Image: `ghcr.io/bryanconradhart/strix-halo-server-ai-toolbox-cockpit`
 
-For installation, follow the shared instructions in the [root README](../../README.md). After installing, see [Use](#use) to start AI Toolbox Cockpit.
+Install this image using the shared [installation instructions](../../README.md). There is no first-boot enrollment or host-wide setup; start the app from the signed-in user's shell as shown below.
 
 ## Use
 
@@ -14,7 +14,7 @@ After signing in, run:
 ai-toolbox-cockpit
 ```
 
-The app is installed from the latest upstream revision available when the image is built and uses the signed-in user's Podman account to create and run toolboxes. Each published image tag identifies the app version included in that build. See the [upstream AI Toolbox Cockpit project](https://github.com/kyuz0/ai-toolbox-cockpit), authored by [kyuz0](https://github.com/kyuz0), for supported backends, models, and controls.
+The app is installed from the latest upstream revision available when the image is built and uses the signed-in user's Podman account to create and run toolboxes. Run `ai-toolbox-cockpit` again whenever you want to reopen it; no setup script needs to be rerun. Each published image tag identifies the app version included in that build. See the [upstream AI Toolbox Cockpit project](https://github.com/kyuz0/ai-toolbox-cockpit), authored by [kyuz0](https://github.com/kyuz0), for supported backends, models, and controls.
 
 ## Updates
 

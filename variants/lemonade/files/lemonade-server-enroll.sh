@@ -1,13 +1,34 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if ! api_key=$(systemd-ask-password --timeout=180 "Choose a Lemonade API key (at least 32 letters, numbers, underscores, or hyphens)"); then
-  echo "Lemonade setup was skipped or timed out. It will be offered again at the next boot." >&2
-  exit 0
-fi
+read_validated_input() {
+  local prompt=$1
+  local pattern=$2
+  local error_message=$3
+  local value
 
-if [[ ! "$api_key" =~ ^[[:alnum:]_-]{32,}$ ]]; then
-  echo "The API key must be at least 32 letters, numbers, underscores, or hyphens."
+  for attempt in 1 2 3; do
+    if IFS= read -r -s -p "$prompt: " value; then
+      printf '\n' >&2
+      if [[ "$value" =~ $pattern ]]; then
+        printf '%s' "$value"
+        return 0
+      fi
+      echo "$error_message (attempt $attempt of 3)." >&2
+    else
+      printf '\n' >&2
+      echo "No response received (attempt $attempt of 3)." >&2
+    fi
+  done
+
+  echo "Setup stopped after 3 attempts. Rerun this command to try again." >&2
+  return 1
+}
+
+if ! api_key=$(read_validated_input \
+  "Choose a Lemonade API key (at least 32 letters, numbers, underscores, or hyphens)" \
+  '^[[:alnum:]_-]{32,}$' \
+  "The API key must be at least 32 letters, numbers, underscores, or hyphens"); then
   exit 1
 fi
 

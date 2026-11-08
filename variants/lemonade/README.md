@@ -4,11 +4,25 @@ This image packages [Lemonade Server](https://lemonade-server.ai/), an upstream 
 
 Image: `ghcr.io/bryanconradhart/strix-halo-server-lemonade`
 
-For installation, follow the shared instructions in the [root README](../../README.md). Complete the Lemonade first-boot setup below after installing.
+Install this image using the shared [installation instructions](../../README.md), then configure the Lemonade API key as described below.
 
-## First boot and use
+## Setup after first login
 
-Choose an API key of at least 32 letters, numbers, underscores, or hyphens at the first-boot prompt. The key is stored in a root-only file on the host, not in the image. Keep it available for clients that connect to `http://<host>:13305`; provide it as the client's API key. Model and server data persist across operating-system updates.
+After installing the image and signing in, setup is offered automatically if it has not been completed. The API key is stored in `/etc/lemonade/server.env` with root-only access; it is not included in the image. Keep it available for clients connecting to `http://<host>:13305`; provide it as the client's API key. Model and server data persist across operating-system updates.
+
+If you deferred setup, run it manually with:
+
+```bash
+sudo /usr/libexec/lemonade-server-enroll.sh
+```
+
+The login offer is suppressed when `/etc/lemonade/server.env` exists. To replace the API key, stop the server, back up the existing key file, and run setup again. The script replaces the file even if it already exists. Update clients to use the new key; keep the backup private:
+
+```bash
+sudo systemctl stop lemonade-server.service
+sudo mv /etc/lemonade/server.env /etc/lemonade/server.env.backup
+sudo /usr/libexec/lemonade-server-enroll.sh
+```
 
 ## Updates
 

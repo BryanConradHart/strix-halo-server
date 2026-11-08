@@ -1,34 +1,55 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-read_input() {
+read_validated_input() {
   local prompt=$1
+  local pattern=$2
+  local error_message=$3
+  local secret=$4
   local value
 
-  if ! value=$(systemd-ask-password --timeout=180 "$prompt"); then
-    echo "Arcane enrollment was skipped or timed out. It will be offered again on the next boot." >&2
-    return 1
-  fi
+  for attempt in 1 2 3; do
+    if [[ "$secret" == true ]]; then
+      if IFS= read -r -s -p "$prompt: " value; then
+        printf '\n' >&2
+        if [[ "$value" =~ $pattern ]]; then
+          printf '%s' "$value"
+          return 0
+        fi
+        echo "$error_message (attempt $attempt of 3)." >&2
+      else
+        printf '\n' >&2
+        echo "No response received (attempt $attempt of 3)." >&2
+      fi
+    elif IFS= read -r -p "$prompt: " value; then
+      if [[ "$value" =~ $pattern ]]; then
+        printf '%s' "$value"
+        return 0
+      fi
+      echo "$error_message (attempt $attempt of 3)." >&2
+    else
+      echo "No response received (attempt $attempt of 3)." >&2
+    fi
+  done
 
-  printf '%s' "$value"
+  echo "Enrollment stopped after 3 attempts. Rerun this command to try again." >&2
+  return 1
 }
 
-if ! manager_api_url=$(read_input "Arcane Manager API URL (for example https://arcane.example.com)"); then
-  exit 0
-fi
-
-if ! agent_token=$(read_input "Arcane Direct Agent token"); then
-  exit 0
-fi
-
 url_pattern='^https?://[^[:space:]#\\"]+$'
-if [[ ! "$manager_api_url" =~ $url_pattern ]]; then
-  echo "The Manager URL must start with http:// or https:// and contain no spaces, quotes, backslashes, or fragments."
+if ! manager_api_url=$(read_validated_input \
+  "Arcane Manager API URL (for example https://arcane.example.com)" \
+  "$url_pattern" \
+  "The Manager URL must start with http:// or https:// and contain no spaces, quotes, backslashes, or fragments" \
+  false); then
   exit 1
 fi
 
-if [[ ! "$agent_token" =~ ^arc_[[:alnum:]_-]+$ ]]; then
-  echo "The Arcane token format is invalid."
+if ! agent_token=$(read_validated_input \
+  "Arcane Direct Agent token" \
+  '^arc_[[:alnum:]_-]+$' \
+  "The Arcane token format is invalid" \
+  true); then
   exit 1
 fi
 
