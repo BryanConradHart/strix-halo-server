@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Strix Halo Server bare-metal installer</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      font: 16px/1.5 system-ui, sans-serif;
+      --border: #8887;
+      --surface: #8881;
+    }
+
+    body {
+      max-width: 760px;
+      margin: 2rem auto;
+      padding: 0 1rem 3rem;
+    }
+
+    h1, h2 { line-height: 1.2; }
+    label { display: block; margin-top: 1rem; font-weight: 650; }
+    input, select, textarea, button {
+      box-sizing: border-box;
+      width: 100%;
+      margin-top: 0.35rem;
+      padding: 0.65rem;
+      font: inherit;
+    }
+
+    textarea { min-height: 5rem; resize: vertical; }
+    #butane-output { min-height: 24rem; font-family: ui-monospace, monospace; white-space: pre; }
+    button, .button { cursor: pointer; font-weight: 700; }
+    .button { display: block; text-align: center; text-decoration: none; }
+    .card { border: 1px solid var(--border); border-radius: 0.5rem; padding: 1rem; margin: 1rem 0; }
+    .hint { color: color-mix(in srgb, currentColor 75%, transparent); }
+    .warning { border-left: 4px solid #d88b00; padding-left: 0.8rem; }
+    code, pre { background: var(--surface); border-radius: 0.25rem; }
+    code { padding: 0.1rem 0.25rem; overflow-wrap: anywhere; }
+    pre { padding: 0.8rem; overflow-x: auto; white-space: pre-wrap; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Strix Halo Server bare-metal setup</h1>
+    <p>This form creates the Butane configuration to install Fedora CoreOS and automatically rebase it to the Strix Halo image you select here, using uCore's supported first-install bootstrap.</p>
+
+    <section class="card">
+      <h2>Before you begin</h2>
+      <p>Prepare a SHA-512 password hash on this computer. In a terminal, run <code>openssl passwd -6</code>, enter your chosen password when prompted, then copy the resulting hash into the form. Do not enter your plain-text password here.</p>
+      <p>SSH login is optional. You can paste multiple public keys or upload multiple files containing public keys. Never enter or upload a private key.</p>
+      <p>All values and uploaded key contents stay in this browser session. The page does not submit, transmit, store, or log them; it only fetches the shared Butane template. The page has no analytics or form-submission endpoint. The downloaded Butane file contains account access information; keep it private.</p>
+    </section>
+
+    <form id="installer-form">
+      <label for="image">Strix Halo image</label>
+      <select id="image" required>
+        <option value="ghcr.io/bryanconradhart/strix-halo-server">Base</option>
+        <option value="ghcr.io/bryanconradhart/strix-halo-server-arcane-manager">Arcane Manager</option>
+        <option value="ghcr.io/bryanconradhart/strix-halo-server-arcane-agent-edge">Arcane Edge Agent</option>
+        <option value="ghcr.io/bryanconradhart/strix-halo-server-arcane-manager-direct">Arcane Direct Agent</option>
+        <option value="ghcr.io/bryanconradhart/strix-halo-server-ai-toolbox-cockpit">AI Toolbox Cockpit</option>
+        <option value="ghcr.io/bryanconradhart/strix-halo-server-lemonade">Lemonade Server</option>
+      </select>
+
+      <label for="tag">Image tag</label>
+      <input id="tag" name="tag" value="latest" maxlength="128" pattern="[A-Za-z0-9][A-Za-z0-9._-]{0,127}" required>
+      <p class="hint">Use <code>latest</code> for the newest build or enter a version tag such as <code>vYYYY.MM.DD-HHMMSS-rRUN_NUMBER</code>.</p>
+
+      <label for="password-hash">Password hash for the <code>core</code> account</label>
+      <input id="password-hash" type="password" autocomplete="off" spellcheck="false" required>
+
+      <label for="ssh-keys">SSH public keys (optional; one per line)</label>
+      <textarea id="ssh-keys" autocomplete="off" spellcheck="false" placeholder="ssh-ed25519 AAAA..."></textarea>
+
+      <label for="ssh-key-files">Upload public key files (optional; select multiple)</label>
+      <input id="ssh-key-files" type="file" accept=".pub,.txt,text/plain" multiple>
+      <p class="hint">You can paste keys, upload one or more files, or do both. Files may contain one public key per line.</p>
+
+      <button type="submit">Generate Butane configuration</button>
+    </form>
+
+    <section id="result" class="card" hidden aria-live="polite">
+      <h2>Configuration ready</h2>
+      <p>Copy the configuration below or download it to the Fedora Workstation Live environment. It automatically installs your selected Strix Halo image during the first-boot bootstrap.</p>
+      <label for="butane-output">Generated Butane configuration</label>
+      <textarea id="butane-output" readonly spellcheck="false" aria-label="Generated Butane configuration"></textarea>
+      <a id="download" class="button" download="strix-halo-server.butane">Download Butane file</a>
+      <h3>After installation</h3>
+      <p>Keep networking connected while the first-boot bootstrap completes and reboots into your selected image. Then sign in as <code>core</code>.</p>
+    </section>
+
+    <p id="status" role="status" aria-live="polite"></p>
+    <p><a href="https://projectucore.org/docs/first-install/">Read uCore's first-install guide</a> for details about its bootstrap and Secure Boot.</p>
+  </main>
+  <script>
+    (() => {
+      const form = document.querySelector("#installer-form");
+      const status = document.querySelector("#status");
+      const result = document.querySelector("#result");
+      const download = document.querySelector("#download");
+      const butaneOutput = document.querySelector("#butane-output");
+      const allowedImages = new Set([
+        "ghcr.io/bryanconradhart/strix-halo-server",
+        "ghcr.io/bryanconradhart/strix-halo-server-arcane-manager",
+        "ghcr.io/bryanconradhart/strix-halo-server-arcane-agent-edge",
+        "ghcr.io/bryanconradhart/strix-halo-server-arcane-manager-direct",
+        "ghcr.io/bryanconradhart/strix-halo-server-ai-toolbox-cockpit",
+        "ghcr.io/bryanconradhart/strix-halo-server-lemonade",
+      ]);
+      let previousUrl;
+
+      const yamlQuote = (value) => `'${value.replaceAll("'", "''")}'`;
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        status.textContent = "";
+        result.hidden = true;
+
+        const image = document.querySelector("#image").value;
+        const tag = document.querySelector("#tag").value.trim();
+        const imageReference = `${image}:${tag}`;
+        const passwordHash = document.querySelector("#password-hash").value.trim();
+        const pastedKeys = document.querySelector("#ssh-keys").value.split(/\r?\n/);
+        const keyFiles = Array.from(document.querySelector("#ssh-key-files").files);
+        let sshKeys;
+
+        try {
+          const uploadedKeys = await Promise.all(keyFiles.map(async (file) => (await file.text()).split(/\r?\n/)));
+          sshKeys = [...pastedKeys, ...uploadedKeys.flat()]
+            .map((key) => key.trim())
+            .filter((key) => key && !key.startsWith("#"));
+        } catch {
+          status.textContent = "Could not read the selected public key file(s).";
+          return;
+        }
+        sshKeys = [...new Set(sshKeys)];
+
+        if (!allowedImages.has(image)) {
+          status.textContent = "Select a Strix Halo image from the list.";
+          return;
+        }
+        if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(tag)) {
+          status.textContent = "Enter a valid image tag.";
+          return;
+        }
+        if (!/^\$6\$[A-Za-z0-9./]{1,16}\$[A-Za-z0-9./]{86}$/.test(passwordHash)) {
+          status.textContent = "Enter a SHA-512 password hash beginning with $6$ (generated by openssl passwd -6).";
+          return;
+        }
+        const validPublicKey = /^(ssh-(ed25519|rsa)|ecdsa-sha2-nistp(256|384|521)|sk-ssh-ed25519|sk-ecdsa-sha2-nistp256) [A-Za-z0-9+/]+={0,3}( .*)?$/;
+        if (sshKeys.some((key) => !validPublicKey.test(key))) {
+          status.textContent = "Each non-empty line or uploaded file entry must be a valid SSH public key.";
+          return;
+        }
+
+        try {
+          const response = await fetch("./ucore-autorebase.butane", { cache: "no-store" });
+          if (!response.ok) {
+            throw new Error(`Could not load the uCore Butane template (HTTP ${response.status}).`);
+          }
+          let butane = await response.text();
+          const imagePlaceholder = "YOUR_STRIX_IMAGE_REF_HERE";
+          if (butane.split(imagePlaceholder).length - 1 !== 2) {
+            throw new Error("The uCore Butane template must contain exactly two Strix image placeholders.");
+          }
+          butane = butane.replaceAll(imagePlaceholder, imageReference);
+          if (!butane.includes("YOUR_GOOD_PASSWORD_HASH_HERE")) {
+            throw new Error("The uCore Butane template is missing its password placeholder.");
+          }
+          butane = butane.replace("YOUR_GOOD_PASSWORD_HASH_HERE", yamlQuote(passwordHash));
+          const sshKeyPlaceholder = "        - YOUR_SSH_PUB_KEY_HERE";
+          if (!butane.includes(`      ssh_authorized_keys:\n${sshKeyPlaceholder}`)) {
+            throw new Error("The uCore Butane template is missing its SSH-key placeholder.");
+          }
+          if (sshKeys.length) {
+            butane = butane.replace(sshKeyPlaceholder, sshKeys.map((key) => `        - ${yamlQuote(key)}`).join("\n"));
+          } else {
+            butane = butane.replace(`      ssh_authorized_keys:\n${sshKeyPlaceholder}\n`, "");
+          }
+
+          if (butane.includes("YOUR_")) {
+            throw new Error("The generated configuration still contains an unfilled placeholder.");
+          }
+
+          const blob = new Blob([butane], { type: "text/yaml;charset=utf-8" });
+          if (previousUrl) {
+            URL.revokeObjectURL(previousUrl);
+          }
+          previousUrl = URL.createObjectURL(blob);
+          download.href = previousUrl;
+          butaneOutput.value = butane;
+          result.hidden = false;
+        } catch (error) {
+          status.textContent = error instanceof Error ? error.message : "Could not generate the configuration.";
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

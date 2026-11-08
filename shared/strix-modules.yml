@@ -15,6 +15,7 @@ modules:
         - mesa-vulkan-drivers
         - clinfo
         - rocminfo
+        - jq
 
   - type: systemd
     system:
@@ -28,11 +29,27 @@ modules:
         destination: /usr/bin/strix-first-boot.sh
       - source: strix-first-boot.service
         destination: /usr/lib/systemd/system/strix-first-boot.service
+      - source: strix-halo-server-cosign.pub
+        destination: /usr/share/pki/containers/strix-halo-server.pub
 
   - type: script
     snippets:
       - |
         chmod 0755 /usr/bin/strix-first-boot.sh
+      - |
+        set -euo pipefail
+        policy=/etc/containers/policy.json
+        test -s "$policy"
+        temporary_policy=$(mktemp /etc/containers/policy.json.XXXXXX)
+        trap 'rm -f "$temporary_policy"' EXIT
+        jq '.transports.docker["ghcr.io/bryanconradhart"] = [{
+          "type": "sigstoreSigned",
+          "keyPath": "/usr/share/pki/containers/strix-halo-server.pub",
+          "signedIdentity": {"type": "matchRepository"}
+        }]' "$policy" > "$temporary_policy"
+        chmod 0644 "$temporary_policy"
+        mv "$temporary_policy" "$policy"
+        trap - EXIT
 
   - type: systemd
     system:
