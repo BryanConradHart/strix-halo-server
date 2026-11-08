@@ -32,7 +32,7 @@ Follow uCore's [official first-install instructions](https://projectucore.org/do
 
 We recommend booting the target machine into the [Fedora Workstation Live desktop](https://fedoraproject.org/workstation/download/). Its browser lets you read uCore's instructions and use our Butane utility, while its terminal includes Podman to run the [Fedora CoreOS installer container](https://docs.fedoraproject.org/en-US/fedora-coreos/bare-metal/#_installing_from_a_container) against the target disk. This keeps configuration and installation in one session, without needing to transfer the Butane file from another computer.
 
-To prepare the Butane file, either edit the template linked from uCore's guide or use our [graphical Butane utility](https://bryanconradhart.github.io/strix-halo-server/install/), which helps select a Strix Halo variant and tag. Follow uCore's official instructions to apply the configuration and install.
+To prepare the Butane file, either edit the template linked from uCore's guide or use our [graphical Butane utility](https://bryanconradhart.github.io/strix-halo-server/install/), which helps select a Strix Halo variant and tag, can hash a password locally in the browser or accept an existing hash, and can configure supported variant setup values. Follow uCore's official instructions to apply the configuration and install.
 
 For Arcane Manager, Arcane Edge Agent, Arcane Direct Agent, and Lemonade Server, the graphical utility can also provision the variant's first-boot settings, matching its setup script. Each variant README links to the builder with that variant selected. These optional settings are written into the downloaded Butane configuration; keep that file private.
 
