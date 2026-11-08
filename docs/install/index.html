@@ -45,13 +45,13 @@
 <body>
   <main>
     <h1>Strix Halo Server bare-metal setup</h1>
-    <p>This form creates the Butane configuration to install Fedora CoreOS and automatically rebase it to the Strix Halo image you select here, using uCore's supported first-install bootstrap.</p>
+    <p>This form creates the Butane configuration to install Fedora CoreOS and automatically rebase it to the Strix Halo image you select here, using uCore's supported first-install bootstrap. For supported variants, it can also provision the same first-boot application settings as the variant setup scripts.</p>
 
     <section class="card">
       <h2>Before you begin</h2>
       <p>Prepare a SHA-512 password hash on this computer. In a terminal, run <code>openssl passwd -6</code>, enter your chosen password when prompted, then copy the resulting hash into the form. Do not enter your plain-text password here.</p>
       <p>SSH login is optional. You can paste multiple public keys or upload multiple files containing public keys. Never enter or upload a private key.</p>
-      <p>All values and uploaded key contents stay in this browser session. The page does not submit, transmit, store, or log them; it only fetches the shared Butane template. The page has no analytics or form-submission endpoint. The downloaded Butane file contains account access information; keep it private.</p>
+      <p>Variant settings are optional. Arcane Manager's encryption key can be generated in this browser or entered manually. All values and uploaded key contents stay in this browser session. The page does not submit, transmit, store, or log them; it only fetches the shared Butane template. The page has no analytics or form-submission endpoint. The downloaded Butane file contains account access information and variant credentials; keep it private.</p>
     </section>
 
     <form id="installer-form">
@@ -64,6 +64,34 @@
         <option value="ghcr.io/bryanconradhart/strix-halo-server-ai-toolbox-cockpit">AI Toolbox Cockpit</option>
         <option value="ghcr.io/bryanconradhart/strix-halo-server-lemonade">Lemonade Server</option>
       </select>
+
+      <section id="variant-settings" class="card" hidden>
+        <h2 id="variant-title">Variant setup</h2>
+        <p id="variant-description"></p>
+        <div id="manager-fields" hidden>
+          <label for="manager-url">Arcane Manager URL</label>
+          <input id="manager-url" type="url" autocomplete="url" placeholder="https://arcane.example.com">
+          <label for="manager-key-mode">Encryption key</label>
+          <select id="manager-key-mode">
+            <option value="generate">Generate a random key in this browser</option>
+            <option value="manual">Enter a key manually</option>
+          </select>
+          <div id="manager-key-entry" hidden>
+            <label for="manager-key">Arcane Manager encryption key (64 hexadecimal characters)</label>
+            <input id="manager-key" type="password" autocomplete="off" spellcheck="false" minlength="64" maxlength="64" pattern="[A-Fa-f0-9]{64}">
+          </div>
+        </div>
+        <div id="agent-fields" hidden>
+          <label for="agent-manager-url">Arcane Manager API URL</label>
+          <input id="agent-manager-url" type="url" autocomplete="url" placeholder="https://arcane.example.com">
+          <label for="agent-token">Arcane Agent token (shown as you type)</label>
+          <input id="agent-token" autocomplete="off" spellcheck="false" pattern="arc_[A-Za-z0-9_-]+">
+        </div>
+        <div id="lemonade-fields" hidden>
+          <label for="lemonade-key">Lemonade API key (at least 32 letters, numbers, underscores, or hyphens)</label>
+          <input id="lemonade-key" autocomplete="off" spellcheck="false" minlength="32" pattern="[A-Za-z0-9_-]{32,}">
+        </div>
+      </section>
 
       <label for="tag">Image tag</label>
       <input id="tag" name="tag" value="latest" maxlength="128" pattern="[A-Za-z0-9][A-Za-z0-9._-]{0,127}" required>
@@ -102,6 +130,16 @@
       const result = document.querySelector("#result");
       const download = document.querySelector("#download");
       const butaneOutput = document.querySelector("#butane-output");
+      const imageSelect = document.querySelector("#image");
+      const variantSettings = document.querySelector("#variant-settings");
+      const variantTitle = document.querySelector("#variant-title");
+      const variantDescription = document.querySelector("#variant-description");
+      const managerFields = document.querySelector("#manager-fields");
+      const agentFields = document.querySelector("#agent-fields");
+      const lemonadeFields = document.querySelector("#lemonade-fields");
+      const managerKeyMode = document.querySelector("#manager-key-mode");
+      const managerKeyEntry = document.querySelector("#manager-key-entry");
+      const managerKey = document.querySelector("#manager-key");
       const allowedImages = new Set([
         "ghcr.io/bryanconradhart/strix-halo-server",
         "ghcr.io/bryanconradhart/strix-halo-server-arcane-manager",
@@ -114,6 +152,137 @@
 
       const yamlQuote = (value) => `'${value.replaceAll("'", "''")}'`;
 
+      const variants = {
+        "ghcr.io/bryanconradhart/strix-halo-server-arcane-manager": {
+          name: "Arcane Manager",
+          description: "Creates /etc/arcane/manager.env and enables the Arcane Manager service.",
+          type: "manager",
+          service: "arcane-manager.service",
+          file: "/etc/arcane/manager.env",
+          directories: [
+            { path: "/etc/arcane", mode: 448, user: "root", group: "root" },
+            { path: "/var/home/core/arcane-projects", mode: 488, user: "core", group: "core" },
+          ],
+          environment: (values) => `APP_URL=${values.url}\nENCRYPTION_KEY=${values.key}`,
+        },
+        "ghcr.io/bryanconradhart/strix-halo-server-arcane-agent-edge": {
+          name: "Arcane Edge Agent",
+          description: "Creates /etc/arcane/agent.env and enables the Arcane Edge Agent service.",
+          type: "agent",
+          service: "arcane-edge-agent.service",
+          file: "/etc/arcane/agent.env",
+          directories: [{ path: "/etc/arcane", mode: 448, user: "root", group: "root" }],
+          environment: (values) => `AGENT_TOKEN=${values.token}\nMANAGER_API_URL=${values.url}`,
+        },
+        "ghcr.io/bryanconradhart/strix-halo-server-arcane-manager-direct": {
+          name: "Arcane Direct Agent",
+          description: "Creates /etc/arcane/agent.env and enables the Arcane Direct Agent service.",
+          type: "agent",
+          service: "arcane-agent.service",
+          file: "/etc/arcane/agent.env",
+          directories: [{ path: "/etc/arcane", mode: 448, user: "root", group: "root" }],
+          environment: (values) => `AGENT_TOKEN=${values.token}\nMANAGER_API_URL=${values.url}`,
+        },
+        "ghcr.io/bryanconradhart/strix-halo-server-lemonade": {
+          name: "Lemonade Server",
+          description: "Creates /etc/lemonade/server.env and enables Lemonade Server.",
+          type: "lemonade",
+          service: "lemonade-server.service",
+          file: "/etc/lemonade/server.env",
+          directories: [{ path: "/etc/lemonade", mode: 448, user: "root", group: "root" }],
+          environment: (values) => `LEMONADE_API_KEY=${values.key}`,
+        },
+      };
+
+      const updateVariantFields = () => {
+        const variant = variants[imageSelect.value];
+        variantSettings.hidden = !variant;
+        managerFields.hidden = variant?.type !== "manager";
+        agentFields.hidden = variant?.type !== "agent";
+        lemonadeFields.hidden = variant?.type !== "lemonade";
+        if (variant) {
+          variantTitle.textContent = `${variant.name} setup`;
+          variantDescription.textContent = variant.description;
+        }
+        managerKeyEntry.hidden = managerKeyMode.value !== "manual";
+        managerKey.required = managerKeyMode.value === "manual" && imageSelect.value === "ghcr.io/bryanconradhart/strix-halo-server-arcane-manager";
+      };
+
+      const urlPattern = /^https?:\/\/[^\s#\\"]+$/;
+      const variantYaml = (variant, values) => {
+        const fileLines = [
+          "directories:",
+          ...variant.directories.flatMap((directory) => [
+            `  - path: ${directory.path}`,
+            `    mode: ${directory.mode}`,
+            "    user:",
+            `      name: ${directory.user}`,
+            "    group:",
+            `      name: ${directory.group}`,
+          ]),
+          "files:",
+          `  - path: ${variant.file}`,
+          "    mode: 384",
+          "    user:",
+          "      name: root",
+          "    group:",
+          "      name: root",
+          "    contents:",
+          "      inline: |",
+          ...variant.environment(values).split("\n").map((line) => `        ${line}`),
+        ];
+        return {
+          storage: fileLines.map((line) => `  ${line}`).join("\n"),
+          systemd: `    - name: ${variant.service}\n      enabled: true`,
+        };
+      };
+
+      const getVariantValues = (variant) => {
+        if (variant.type === "manager") {
+          const url = document.querySelector("#manager-url").value.trim();
+          if (!urlPattern.test(url)) {
+            throw new Error("Enter a valid Arcane Manager URL using http:// or https:// without spaces, quotes, backslashes, or fragments.");
+          }
+          let key;
+          if (managerKeyMode.value === "generate") {
+            key = Array.from(crypto.getRandomValues(new Uint8Array(32)), (byte) => byte.toString(16).padStart(2, "0")).join("");
+          } else {
+            key = managerKey.value.trim();
+            if (!/^[A-Fa-f0-9]{64}$/.test(key)) {
+              throw new Error("Enter an Arcane Manager encryption key of exactly 64 hexadecimal characters.");
+            }
+          }
+          return { url, key };
+        }
+        if (variant.type === "agent") {
+          const url = document.querySelector("#agent-manager-url").value.trim();
+          const token = document.querySelector("#agent-token").value.trim();
+          if (!urlPattern.test(url)) {
+            throw new Error("Enter a valid Arcane Manager API URL using http:// or https:// without spaces, quotes, backslashes, or fragments.");
+          }
+          if (!/^arc_[A-Za-z0-9_-]+$/.test(token)) {
+            throw new Error("Enter a valid Arcane Agent token beginning with arc_.");
+          }
+          return { url, token };
+        }
+        const key = document.querySelector("#lemonade-key").value.trim();
+        if (!/^[A-Za-z0-9_-]{32,}$/.test(key)) {
+          throw new Error("The Lemonade API key must be at least 32 letters, numbers, underscores, or hyphens.");
+        }
+        return { key };
+      };
+
+      imageSelect.addEventListener("change", updateVariantFields);
+      managerKeyMode.addEventListener("change", updateVariantFields);
+      const requestedVariant = new URLSearchParams(location.search).get("variant");
+      if (requestedVariant) {
+        const image = `ghcr.io/bryanconradhart/strix-halo-server-${requestedVariant}`;
+        if (allowedImages.has(image)) {
+          imageSelect.value = image;
+        }
+      }
+      updateVariantFields();
+
       form.addEventListener("submit", async (event) => {
         event.preventDefault();
         status.textContent = "";
@@ -122,6 +291,7 @@
         const image = document.querySelector("#image").value;
         const tag = document.querySelector("#tag").value.trim();
         const imageReference = `${image}:${tag}`;
+        const variant = variants[image];
         const passwordHash = document.querySelector("#password-hash").value.trim();
         const pastedKeys = document.querySelector("#ssh-keys").value.split(/\r?\n/);
         const keyFiles = Array.from(document.querySelector("#ssh-key-files").files);
@@ -156,6 +326,16 @@
           return;
         }
 
+        let variantFragments = { storage: "", systemd: "" };
+        if (variant) {
+          try {
+            variantFragments = variantYaml(variant, getVariantValues(variant));
+          } catch (error) {
+            status.textContent = error instanceof Error ? error.message : "Could not validate variant settings.";
+            return;
+          }
+        }
+
         try {
           const response = await fetch("./ucore-autorebase.butane", { cache: "no-store" });
           if (!response.ok) {
@@ -180,6 +360,13 @@
           } else {
             butane = butane.replace(`      ssh_authorized_keys:\n${sshKeyPlaceholder}\n`, "");
           }
+
+          if (!butane.includes("YOUR_VARIANT_STORAGE_HERE") || !butane.includes("YOUR_VARIANT_SYSTEMD_HERE")) {
+            throw new Error("The uCore Butane template is missing its variant setup placeholders.");
+          }
+          butane = butane
+            .replace("  YOUR_VARIANT_STORAGE_HERE", variantFragments.storage)
+            .replace("    YOUR_VARIANT_SYSTEMD_HERE", variantFragments.systemd);
 
           if (butane.includes("YOUR_")) {
             throw new Error("The generated configuration still contains an unfilled placeholder.");

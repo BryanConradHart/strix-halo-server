@@ -34,4 +34,6 @@ We recommend booting the target machine into the [Fedora Workstation Live deskto
 
 To prepare the Butane file, either edit the template linked from uCore's guide or use our [graphical Butane utility](https://bryanconradhart.github.io/strix-halo-server/install/), which helps select a Strix Halo variant and tag. Follow uCore's official instructions to apply the configuration and install.
 
+For Arcane Manager, Arcane Edge Agent, Arcane Direct Agent, and Lemonade Server, the graphical utility can also provision the variant's first-boot settings, matching its setup script. Each variant README links to the builder with that variant selected. These optional settings are written into the downloaded Butane configuration; keep that file private.
+
 After installation, you may use `bootc` to switch to another variant as described in [Switch an existing bootc system](#1-switch-an-existing-bootc-system).

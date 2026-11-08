@@ -6,6 +6,8 @@ Image: `ghcr.io/bryanconradhart/strix-halo-server-arcane-agent-edge`
 
 Install this image using the shared [installation instructions](../../README.md), then enroll the Edge Agent as described below.
 
+For a bare-metal installation, you can provide the Edge Agent token and Manager API URL in the [Butane setup builder](https://bryanconradhart.github.io/strix-halo-server/install/?variant=arcane-agent-edge). Keep the generated Butane file private.
+
 ## Enrollment after first login
 
 In Arcane Manager, add an **Edge** environment and generate the agent configuration. After installing the image and signing in, enrollment is offered automatically if it has not been completed. The token is stored only in `/etc/arcane/agent.env` on the host, with root-only access; it is not included in the image.

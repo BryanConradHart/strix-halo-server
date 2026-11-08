@@ -10,6 +10,8 @@ storage:
   directories:
     - path: /etc/ucore-autorebase
       mode: 0754
+  # Variant-specific credential files are inserted by the setup builder.
+  YOUR_VARIANT_STORAGE_HERE
 systemd:
   units:
     - name: ucore-unsigned-autorebase.service
@@ -30,6 +32,8 @@ systemd:
         ExecStart=/usr/bin/systemctl reboot
         [Install]
         WantedBy=multi-user.target
+    # Variant-specific application services are enabled by the setup builder.
+    YOUR_VARIANT_SYSTEMD_HERE
     - name: ucore-signed-autorebase.service
       enabled: true
       contents: |
