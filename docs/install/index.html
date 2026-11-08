@@ -95,7 +95,7 @@
       </select>
 
       <label for="tag">Image tag</label>
-      <input id="tag" name="tag" value="latest" maxlength="128" pattern="[A-Za-z0-9][A-Za-z0-9._-]{0,127}" required>
+      <input id="tag" name="tag" value="latest" maxlength="128" pattern="[A-Za-z0-9][A-Za-z0-9._\x2d]{0,127}" title="Use 1 to 128 letters, numbers, periods, underscores, or hyphens; start with a letter or number." required>
       <p class="hint">Use <code>latest</code> for the newest build or enter a version tag such as <code>vYYYY.MM.DD-HHMMSS-rRUN_NUMBER</code>.</p>
 
       <label id="password-label" for="password-hash">SHA-512 password hash for the <code>core</code> account</label>
@@ -131,18 +131,18 @@
           </label>
           <div id="manager-key-entry" hidden>
             <label for="manager-key">Arcane Manager encryption key (64 hexadecimal characters)</label>
-            <input id="manager-key" type="password" autocomplete="off" spellcheck="false" minlength="64" maxlength="64" pattern="[A-Fa-f0-9]{64}">
+            <input id="manager-key" type="password" autocomplete="off" spellcheck="false" minlength="64" maxlength="64" pattern="[A-Fa-f0-9]{64}" title="Enter exactly 64 hexadecimal characters.">
           </div>
         </div>
         <div id="agent-fields" hidden>
           <label for="agent-manager-url">Arcane Manager API URL</label>
           <input id="agent-manager-url" type="url" autocomplete="url" placeholder="https://arcane.example.com">
           <label for="agent-token">Arcane Agent token (shown as you type)</label>
-          <input id="agent-token" autocomplete="off" spellcheck="false" pattern="arc_[A-Za-z0-9_-]+">
+          <input id="agent-token" autocomplete="off" spellcheck="false" pattern="arc_[A-Za-z0-9_\x2d]+" title="The token must start with arc_ and contain only letters, numbers, underscores, or hyphens.">
         </div>
         <div id="lemonade-fields" hidden>
           <label for="lemonade-key">Lemonade API key (at least 32 letters, numbers, underscores, or hyphens)</label>
-          <input id="lemonade-key" autocomplete="off" spellcheck="false" minlength="32" pattern="[A-Za-z0-9_-]{32,}">
+          <input id="lemonade-key" autocomplete="off" spellcheck="false" minlength="32" pattern="[A-Za-z0-9_\x2d]{32,}" title="Enter at least 32 letters, numbers, underscores, or hyphens.">
         </div>
       </section>
 
@@ -199,6 +199,16 @@
         "ghcr.io/bryanconradhart/strix-halo-server-lemonade",
       ]);
       let previousUrl;
+
+      const clearGeneratedOutput = () => {
+        result.hidden = true;
+        butaneOutput.value = "";
+        download.removeAttribute("href");
+        if (previousUrl) {
+          URL.revokeObjectURL(previousUrl);
+          previousUrl = undefined;
+        }
+      };
 
       const yamlQuote = (value) => `'${value.replaceAll("'", "''")}'`;
 
@@ -448,10 +458,20 @@
       }
       updateVariantFields();
 
+      form.addEventListener("invalid", (event) => {
+        clearGeneratedOutput();
+        const fieldName = event.target.labels?.[0]?.textContent.trim();
+        status.textContent = fieldName
+          ? `${fieldName}: ${event.target.validationMessage}`
+          : event.target.validationMessage;
+      }, true);
+      form.addEventListener("input", () => { status.textContent = ""; });
+      form.addEventListener("change", () => { status.textContent = ""; });
+
       form.addEventListener("submit", async (event) => {
         event.preventDefault();
         status.textContent = "";
-        result.hidden = true;
+        clearGeneratedOutput();
 
         const image = document.querySelector("#image").value;
         const tag = document.querySelector("#tag").value.trim();
@@ -481,7 +501,7 @@
           status.textContent = "Enter a valid image tag.";
           return;
         }
-        if (passwordEntryMode) {
+        if (passwordModeToggle.checked) {
           try {
             status.textContent = "Hashing the password locally in this browser...";
             passwordHash = await sha512Crypt(passwordInput.value);
