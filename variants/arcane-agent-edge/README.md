@@ -6,7 +6,7 @@ Image: `ghcr.io/bryanconradhart/strix-halo-server-arcane-agent-edge`
 
 Install this image using the shared [installation instructions](../../README.md), then enroll the Edge Agent as described below.
 
-For a bare-metal installation, you can provide the Edge Agent token and Manager API URL in the [Butane setup builder](https://bryanconradhart.github.io/strix-halo-server/install/?variant=arcane-agent-edge). Keep the generated Butane file private.
+For a bare-metal installation, the [Butane setup builder](https://bryanconradhart.github.io/strix-halo-server/install/?variant=arcane-agent-edge) lets you choose between the interactive setup after login (the default) and provisioning during installation. Choose Butane provisioning to require the Edge Agent token and Manager API URL. Keep the generated Butane file private.
 
 ## Enrollment after first login
 

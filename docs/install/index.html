@@ -71,6 +71,12 @@
       <section id="variant-settings" class="card" hidden>
         <h2 id="variant-title">Variant setup</h2>
         <p id="variant-description"></p>
+        <label for="variant-provision-mode">Variant setup timing</label>
+        <select id="variant-provision-mode">
+          <option value="login">Set up interactively after login</option>
+          <option value="butane">Provision setup with this Butane configuration</option>
+        </select>
+        <p id="variant-provision-hint" class="hint">The variant setup script will prompt for its required values the first time you sign in.</p>
         <div id="manager-fields" hidden>
           <label for="manager-url">Arcane Manager URL</label>
           <input id="manager-url" type="url" autocomplete="url" placeholder="https://arcane.example.com">
@@ -142,12 +148,18 @@
       const variantSettings = document.querySelector("#variant-settings");
       const variantTitle = document.querySelector("#variant-title");
       const variantDescription = document.querySelector("#variant-description");
+      const variantProvisionMode = document.querySelector("#variant-provision-mode");
+      const variantProvisionHint = document.querySelector("#variant-provision-hint");
       const managerFields = document.querySelector("#manager-fields");
       const agentFields = document.querySelector("#agent-fields");
       const lemonadeFields = document.querySelector("#lemonade-fields");
       const managerKeyMode = document.querySelector("#manager-key-mode");
       const managerKeyEntry = document.querySelector("#manager-key-entry");
       const managerKey = document.querySelector("#manager-key");
+      const managerUrl = document.querySelector("#manager-url");
+      const agentManagerUrl = document.querySelector("#agent-manager-url");
+      const agentToken = document.querySelector("#agent-token");
+      const lemonadeKey = document.querySelector("#lemonade-key");
       const passwordLabel = document.querySelector("#password-label");
       const passwordHashInput = document.querySelector("#password-hash");
       const passwordInput = document.querySelector("#password-input");
@@ -292,16 +304,33 @@
 
       const updateVariantFields = () => {
         const variant = variants[imageSelect.value];
+        const provisionWithButane = Boolean(variant) && variantProvisionMode.value === "butane";
         variantSettings.hidden = !variant;
-        managerFields.hidden = variant?.type !== "manager";
-        agentFields.hidden = variant?.type !== "agent";
-        lemonadeFields.hidden = variant?.type !== "lemonade";
+        managerFields.hidden = !provisionWithButane || variant?.type !== "manager";
+        agentFields.hidden = !provisionWithButane || variant?.type !== "agent";
+        lemonadeFields.hidden = !provisionWithButane || variant?.type !== "lemonade";
         if (variant) {
           variantTitle.textContent = `${variant.name} setup`;
           variantDescription.textContent = variant.description;
         }
-        managerKeyEntry.hidden = managerKeyMode.value !== "manual";
-        managerKey.required = managerKeyMode.value === "manual" && imageSelect.value === "ghcr.io/bryanconradhart/strix-halo-server-arcane-manager";
+        const manager = provisionWithButane && variant?.type === "manager";
+        const agent = provisionWithButane && variant?.type === "agent";
+        const lemonade = provisionWithButane && variant?.type === "lemonade";
+        variantProvisionHint.textContent = provisionWithButane
+          ? "Complete every required field below to include the variant setup in this configuration."
+          : "The variant setup script will prompt for its required values the first time you sign in.";
+        managerUrl.disabled = !manager;
+        managerUrl.required = manager;
+        managerKeyMode.disabled = !manager;
+        managerKeyEntry.hidden = !manager || managerKeyMode.value !== "manual";
+        managerKey.disabled = !manager || managerKeyMode.value !== "manual";
+        managerKey.required = manager && managerKeyMode.value === "manual";
+        agentManagerUrl.disabled = !agent;
+        agentManagerUrl.required = agent;
+        agentToken.disabled = !agent;
+        agentToken.required = agent;
+        lemonadeKey.disabled = !lemonade;
+        lemonadeKey.required = lemonade;
       };
 
       const urlPattern = /^https?:\/\/[^\s#\\"]+$/;
@@ -369,6 +398,7 @@
       };
 
       imageSelect.addEventListener("change", updateVariantFields);
+      variantProvisionMode.addEventListener("change", updateVariantFields);
       managerKeyMode.addEventListener("change", updateVariantFields);
       let passwordEntryMode = false;
       passwordModeButton.addEventListener("click", () => {
@@ -450,7 +480,7 @@
         }
 
         let variantFragments = { storage: "", systemd: "" };
-        if (variant) {
+        if (variant && variantProvisionMode.value === "butane") {
           try {
             variantFragments = variantYaml(variant, getVariantValues(variant));
           } catch (error) {
