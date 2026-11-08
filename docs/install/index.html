@@ -34,9 +34,35 @@
     button, .button { cursor: pointer; font-weight: 700; }
     .button { display: block; text-align: center; text-decoration: none; }
     .card { border: 1px solid var(--border); border-radius: 0.5rem; padding: 1rem; margin: 1rem 0; }
-    .input-toggle { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.35rem; }
-    .input-toggle input { flex: 1; min-width: 0; width: auto; margin-top: 0; }
-    .input-toggle button { flex: none; width: auto; margin-top: 0; }
+    .toggle-control { display: flex; align-items: center; gap: 0.6rem; margin-top: 0.75rem; cursor: pointer; }
+    .toggle-control input {
+      appearance: none;
+      position: relative;
+      flex: none;
+      width: 2.4rem;
+      height: 1.35rem;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      border-radius: 999px;
+      background: #888;
+      cursor: pointer;
+      transition: background-color 150ms ease;
+    }
+    .toggle-control input::before {
+      position: absolute;
+      top: 0.175rem;
+      left: 0.15rem;
+      width: 1rem;
+      height: 1rem;
+      border-radius: 50%;
+      background: white;
+      content: "";
+      transition: transform 150ms ease;
+    }
+    .toggle-control input:checked { background: #268bd2; }
+    .toggle-control input:checked::before { transform: translateX(1.05rem); }
+    .toggle-control input:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
     .hint { color: color-mix(in srgb, currentColor 75%, transparent); }
     .warning { border-left: 4px solid #d88b00; padding-left: 0.8rem; }
     code, pre { background: var(--surface); border-radius: 0.25rem; }
@@ -68,23 +94,41 @@
         <option value="ghcr.io/bryanconradhart/strix-halo-server-lemonade">Lemonade Server</option>
       </select>
 
+      <label for="tag">Image tag</label>
+      <input id="tag" name="tag" value="latest" maxlength="128" pattern="[A-Za-z0-9][A-Za-z0-9._-]{0,127}" required>
+      <p class="hint">Use <code>latest</code> for the newest build or enter a version tag such as <code>vYYYY.MM.DD-HHMMSS-rRUN_NUMBER</code>.</p>
+
+      <label id="password-label" for="password-hash">SHA-512 password hash for the <code>core</code> account</label>
+      <input id="password-hash" type="password" autocomplete="off" spellcheck="false" required>
+      <input id="password-input" type="password" autocomplete="off" spellcheck="false" maxlength="1024" hidden>
+      <label class="toggle-control" for="password-mode">
+        <input id="password-mode" type="checkbox" role="switch">
+        <span>Enter a password instead of a hash</span>
+      </label>
+      <p id="password-hint" class="hint">Paste a hash from <code>openssl passwd -6</code>, or choose password entry to have this page create one locally.</p>
+
+      <label for="ssh-keys">SSH public keys (optional; one per line)</label>
+      <textarea id="ssh-keys" autocomplete="off" spellcheck="false" placeholder="ssh-ed25519 AAAA..."></textarea>
+
+      <label for="ssh-key-files">Upload public key files (optional; select multiple)</label>
+      <input id="ssh-key-files" type="file" accept=".pub,.txt,text/plain" multiple>
+      <p class="hint">You can paste keys, upload one or more files, or do both. Files may contain one public key per line.</p>
+
       <section id="variant-settings" class="card" hidden>
         <h2 id="variant-title">Variant setup</h2>
         <p id="variant-description"></p>
-        <label for="variant-provision-mode">Variant setup timing</label>
-        <select id="variant-provision-mode">
-          <option value="login">Set up interactively after login</option>
-          <option value="butane">Provision setup with this Butane configuration</option>
-        </select>
+        <label class="toggle-control" for="variant-provision-mode">
+          <input id="variant-provision-mode" type="checkbox" role="switch">
+          <span>Provision setup values in this Butane configuration</span>
+        </label>
         <p id="variant-provision-hint" class="hint">The variant setup script will prompt for its required values the first time you sign in.</p>
         <div id="manager-fields" hidden>
           <label for="manager-url">Arcane Manager URL</label>
           <input id="manager-url" type="url" autocomplete="url" placeholder="https://arcane.example.com">
-          <label for="manager-key-mode">Encryption key</label>
-          <select id="manager-key-mode">
-            <option value="generate">Generate a random key in this browser</option>
-            <option value="manual">Enter a key manually</option>
-          </select>
+          <label class="toggle-control" for="manager-key-mode">
+            <input id="manager-key-mode" type="checkbox" role="switch">
+            <span>Enter an encryption key manually instead of generating one</span>
+          </label>
           <div id="manager-key-entry" hidden>
             <label for="manager-key">Arcane Manager encryption key (64 hexadecimal characters)</label>
             <input id="manager-key" type="password" autocomplete="off" spellcheck="false" minlength="64" maxlength="64" pattern="[A-Fa-f0-9]{64}">
@@ -101,25 +145,6 @@
           <input id="lemonade-key" autocomplete="off" spellcheck="false" minlength="32" pattern="[A-Za-z0-9_-]{32,}">
         </div>
       </section>
-
-      <label for="tag">Image tag</label>
-      <input id="tag" name="tag" value="latest" maxlength="128" pattern="[A-Za-z0-9][A-Za-z0-9._-]{0,127}" required>
-      <p class="hint">Use <code>latest</code> for the newest build or enter a version tag such as <code>vYYYY.MM.DD-HHMMSS-rRUN_NUMBER</code>.</p>
-
-      <label id="password-label" for="password-hash">SHA-512 password hash for the <code>core</code> account</label>
-      <div class="input-toggle">
-        <input id="password-hash" type="password" autocomplete="off" spellcheck="false" required>
-        <input id="password-input" type="password" autocomplete="off" spellcheck="false" maxlength="1024" hidden>
-        <button id="password-mode" type="button" aria-pressed="false">Enter a password instead</button>
-      </div>
-      <p id="password-hint" class="hint">Paste a hash from <code>openssl passwd -6</code>, or choose password entry to have this page create one locally.</p>
-
-      <label for="ssh-keys">SSH public keys (optional; one per line)</label>
-      <textarea id="ssh-keys" autocomplete="off" spellcheck="false" placeholder="ssh-ed25519 AAAA..."></textarea>
-
-      <label for="ssh-key-files">Upload public key files (optional; select multiple)</label>
-      <input id="ssh-key-files" type="file" accept=".pub,.txt,text/plain" multiple>
-      <p class="hint">You can paste keys, upload one or more files, or do both. Files may contain one public key per line.</p>
 
       <button type="submit">Generate Butane configuration</button>
     </form>
@@ -163,7 +188,7 @@
       const passwordLabel = document.querySelector("#password-label");
       const passwordHashInput = document.querySelector("#password-hash");
       const passwordInput = document.querySelector("#password-input");
-      const passwordModeButton = document.querySelector("#password-mode");
+      const passwordModeToggle = document.querySelector("#password-mode");
       const passwordHint = document.querySelector("#password-hint");
       const allowedImages = new Set([
         "ghcr.io/bryanconradhart/strix-halo-server",
@@ -304,7 +329,7 @@
 
       const updateVariantFields = () => {
         const variant = variants[imageSelect.value];
-        const provisionWithButane = Boolean(variant) && variantProvisionMode.value === "butane";
+        const provisionWithButane = Boolean(variant) && variantProvisionMode.checked;
         variantSettings.hidden = !variant;
         managerFields.hidden = !provisionWithButane || variant?.type !== "manager";
         agentFields.hidden = !provisionWithButane || variant?.type !== "agent";
@@ -317,14 +342,14 @@
         const agent = provisionWithButane && variant?.type === "agent";
         const lemonade = provisionWithButane && variant?.type === "lemonade";
         variantProvisionHint.textContent = provisionWithButane
-          ? "Complete every required field below to include the variant setup in this configuration."
+          ? "The setup script and login check remain installed; the check detects the config created here and does not prompt. Complete every required field below."
           : "The variant setup script will prompt for its required values the first time you sign in.";
         managerUrl.disabled = !manager;
         managerUrl.required = manager;
         managerKeyMode.disabled = !manager;
-        managerKeyEntry.hidden = !manager || managerKeyMode.value !== "manual";
-        managerKey.disabled = !manager || managerKeyMode.value !== "manual";
-        managerKey.required = manager && managerKeyMode.value === "manual";
+        managerKeyEntry.hidden = !manager || !managerKeyMode.checked;
+        managerKey.disabled = !manager || !managerKeyMode.checked;
+        managerKey.required = manager && managerKeyMode.checked;
         agentManagerUrl.disabled = !agent;
         agentManagerUrl.required = agent;
         agentToken.disabled = !agent;
@@ -369,7 +394,7 @@
             throw new Error("Enter a valid Arcane Manager URL using http:// or https:// without spaces, quotes, backslashes, or fragments.");
           }
           let key;
-          if (managerKeyMode.value === "generate") {
+          if (!managerKeyMode.checked) {
             key = Array.from(crypto.getRandomValues(new Uint8Array(32)), (byte) => byte.toString(16).padStart(2, "0")).join("");
           } else {
             key = managerKey.value.trim();
@@ -400,9 +425,8 @@
       imageSelect.addEventListener("change", updateVariantFields);
       variantProvisionMode.addEventListener("change", updateVariantFields);
       managerKeyMode.addEventListener("change", updateVariantFields);
-      let passwordEntryMode = false;
-      passwordModeButton.addEventListener("click", () => {
-        passwordEntryMode = !passwordEntryMode;
+      passwordModeToggle.addEventListener("change", () => {
+        const passwordEntryMode = passwordModeToggle.checked;
         passwordHashInput.hidden = passwordEntryMode;
         passwordHashInput.required = !passwordEntryMode;
         passwordInput.hidden = !passwordEntryMode;
@@ -411,8 +435,6 @@
         passwordLabel.textContent = passwordEntryMode
           ? "Password for the core account (hashed locally)"
           : "SHA-512 password hash for the core account";
-        passwordModeButton.textContent = passwordEntryMode ? "Enter a hash instead" : "Enter a password instead";
-        passwordModeButton.setAttribute("aria-pressed", String(passwordEntryMode));
         passwordHint.textContent = passwordEntryMode
           ? "The password is hashed in this browser using SHA-512-crypt (5000 rounds) and a random salt. Maximum length: 1024 UTF-8 bytes."
           : "Paste a hash from openssl passwd -6, or choose password entry to have this page create one locally.";
@@ -480,7 +502,7 @@
         }
 
         let variantFragments = { storage: "", systemd: "" };
-        if (variant && variantProvisionMode.value === "butane") {
+        if (variant && variantProvisionMode.checked) {
           try {
             variantFragments = variantYaml(variant, getVariantValues(variant));
           } catch (error) {
