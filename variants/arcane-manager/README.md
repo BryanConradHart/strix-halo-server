@@ -2,6 +2,8 @@
 
 This image adds Arcane Manager for administering local and remote container environments. It exposes the manager web interface on TCP port `3552` and connects to the host's Podman service. Access to the Podman socket allows full control of containers on the host; restrict access to trusted administrators and networks.
 
+For rootful Podman systemd and Quadlet management, the manager runs as root in its container, mounts the host system D-Bus socket, and shares the writable `/etc/containers/systemd` directory used for installed Quadlets. Treat manager access as privileged host administration.
+
 Image: `ghcr.io/bryanconradhart/strix-halo-server-arcane-manager`
 
 Install this image using the shared [installation instructions](../../README.md), then complete the Arcane Manager setup below.

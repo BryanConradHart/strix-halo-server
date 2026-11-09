@@ -2,6 +2,8 @@
 
 This image adds the Arcane Direct Agent to the clean Strix Halo image and connects it to an Arcane Manager. Arcane can manage containers on this host through its Podman socket. Access to that socket is highly privileged, so expose the agent only on a trusted network and restrict access to TCP port `3553`.
 
+The agent also mounts the host system D-Bus socket to control rootful systemd services, and shares the writable `/etc/containers/systemd` directory where Podman installs Quadlets.
+
 The existing image reference retains its historical `arcane-manager-direct` name for compatibility:
 `ghcr.io/bryanconradhart/strix-halo-server-arcane-manager-direct`
 

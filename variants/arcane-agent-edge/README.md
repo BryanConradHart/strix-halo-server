@@ -2,6 +2,8 @@
 
 This image adds the Arcane Edge Agent to the clean Strix Halo image. The agent connects outbound to Arcane Manager, so the host does not need an inbound agent port. The Podman socket gives the manager control over containers on this host; use a trusted Arcane Manager and protect its credentials.
 
+The agent also mounts the host system D-Bus socket to control rootful systemd services, and shares the writable `/etc/containers/systemd` directory where Podman installs Quadlets.
+
 Image: `ghcr.io/bryanconradhart/strix-halo-server-arcane-agent-edge`
 
 Install this image using the shared [installation instructions](../../README.md), then enroll the Edge Agent as described below.

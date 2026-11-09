@@ -9,10 +9,13 @@ Image=ghcr.io/getarcaneapp/agent:latest
 ContainerName=arcane-agent
 AutoUpdate=registry
 Environment=AGENT_MODE=true
+Environment=DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket
 EnvironmentFile=/etc/arcane/agent.env
 PublishPort=3553:3553
 SecurityLabelDisable=true
 Volume=/run/podman/podman.sock:/var/run/docker.sock
+Volume=/run/dbus/system_bus_socket:/run/dbus/system_bus_socket
+Volume=/etc/containers/systemd:/etc/containers/systemd:rw
 Volume=arcane-agent-data:/app/data
 
 [Service]
