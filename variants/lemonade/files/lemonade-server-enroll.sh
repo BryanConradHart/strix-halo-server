@@ -32,7 +32,7 @@ if ! api_key=$(read_validated_input \
   exit 1
 fi
 
-install -d -o root -g root -m 0700 /etc/lemonade
+install -d -o root -g root -m 0711 /etc/lemonade
 umask 077
 config_tmp=$(mktemp /etc/lemonade/server.env.XXXXXX)
 trap 'rm -f "$config_tmp"' EXIT

@@ -66,7 +66,13 @@ sudo podman run --pull=always --privileged --rm \
   install /dev/REPLACE_WITH_TARGET_DISK --ignition-file strix-halo-server.ign
 ```
 
-When the installer finishes, remove the live USB and reboot. Leave the computer connected to the network and allow uCore's first-boot setup to finish; it switches to the selected image and reboots during that process. Once it has booted into the installed system, sign in as `core` with the password you configured. See the selected variant's README for its post-login setup and application instructions.
+When the installer finishes, remove the live USB and restart the computer:
+
+```bash
+sudo systemctl reboot
+```
+
+Leave the computer connected to the network. Expect it to restart a few times while uCore completes its first-boot setup and switches to the selected image. Let the process finish; it will eventually stop at the installed system's login screen. Sign in as `core` with the password you configured. See the selected variant's README for its post-login setup and application instructions.
 
 #### After installation
 

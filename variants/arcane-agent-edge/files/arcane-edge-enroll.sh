@@ -53,7 +53,7 @@ if ! agent_token=$(read_validated_input \
   exit 1
 fi
 
-install -d -o root -g root -m 0700 /etc/arcane
+install -d -o root -g root -m 0711 /etc/arcane
 umask 077
 config_tmp=$(mktemp /etc/arcane/agent.env.XXXXXX)
 trap 'rm -f "$config_tmp"' EXIT
