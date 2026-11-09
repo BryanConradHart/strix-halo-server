@@ -83,3 +83,5 @@ jobs:
           docker pull "${IMAGE}:latest"
           docker tag "${IMAGE}:latest" "${IMAGE}:${IMAGE_TAG}"
           docker push "${IMAGE}:${IMAGE_TAG}"
+          cosign verify --key cosign.pub "${IMAGE}:latest" >/dev/null
+          cosign verify --key cosign.pub "${IMAGE}:${IMAGE_TAG}" >/dev/null
