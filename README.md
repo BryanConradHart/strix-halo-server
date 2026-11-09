@@ -28,12 +28,46 @@ sudo systemctl reboot
 
 ### 2. Bare-metal installation
 
-Follow uCore's [official first-install instructions](https://projectucore.org/docs/first-install/) for preparing Butane and installing Fedora CoreOS. Use the same selected Strix Halo image and tag in both rebase stages, as described in uCore's guide; the first-boot process then rebases directly to that image.
+#### uCore's Official First-Install Guide
 
-We recommend booting the target machine into the [Fedora Workstation Live desktop](https://fedoraproject.org/workstation/download/). Its browser lets you read uCore's instructions and use our Butane utility, while its terminal includes Podman to run the [Fedora CoreOS installer container](https://docs.fedoraproject.org/en-US/fedora-coreos/bare-metal/#_installing_from_a_container) against the target disk. This keeps configuration and installation in one session, without needing to transfer the Butane file from another computer.
+Install uCore by following [uCore's official first-install instructions](https://projectucore.org/docs/first-install/).
 
-To prepare the Butane file, either edit the template linked from uCore's guide or use our [graphical Butane utility](https://bryanconradhart.github.io/strix-halo-server/install/), which helps select a Strix Halo variant and tag, can hash a password locally in the browser or accept an existing hash, and can configure supported variant setup values. Follow uCore's official instructions to apply the configuration and install.
+#### Streamlined Strix Halo Server install instructions
 
-For Arcane Manager, Arcane Edge Agent, Arcane Direct Agent, and Lemonade Server, the graphical utility lets you choose between answering the variant setup script's prompts after login or provisioning its settings in Butane. Interactive setup is selected by default. Choose Butane provisioning to make the corresponding setup fields required; otherwise, the generated configuration contains no variant credentials or application setup outputs. Each variant README links to the builder with that variant selected. Butane-provisioned settings are written into the downloaded configuration; keep that file private.
+The steps below apply uCore's official first-install process to Strix Halo Server, using a prepared configuration and commands for this project's images.
 
-After installation, you may use `bootc` to switch to another variant as described in [Switch an existing bootc system](#1-switch-an-existing-bootc-system).
+Create a bootable USB from the [Fedora Workstation Live image](https://fedoraproject.org/workstation/download/) and boot the Strix Halo Server from it.
+Once the live desktop starts, connect to the network and open this README in the browser.
+Use the [Butane utility](https://bryanconradhart.github.io/strix-halo-server/install/) to generate and download `strix-halo-server.butane` for the image you want to install.
+
+> [!WARNING]
+> The file contains your account password hash and may contain application credentials, so keep it private.
+
+Open the terminal and go to the directory where the browser saved the file (usually `Downloads`).
+Before installing, compile the Butane file to Ignition to catch configuration errors before writing to a disk. If the command reports an error, fix the configuration in the utility and download it again; continue only after it succeeds.
+
+```bash
+podman run --interactive --rm quay.io/coreos/butane:release \
+  --pretty --strict < strix-halo-server.butane > strix-halo-server.ign
+```
+
+Next, identify the computer's internal target drive:
+
+```bash
+lsblk -o NAME,SIZE,MODEL,TYPE,MOUNTPOINTS
+```
+
+Check the drive's name, size, and model carefully. The next command erases the selected drive; use the whole drive (for example, `/dev/nvme0n1`), not a partition (such as `/dev/nvme0n1p1`), and do not select the live USB. Replace `/dev/REPLACE_WITH_TARGET_DISK` with that drive's device path:
+
+```bash
+sudo podman run --pull=always --privileged --rm \
+  -v /dev:/dev -v /run/udev:/run/udev -v "$PWD:/data" -w /data \
+  quay.io/coreos/coreos-installer:release \
+  install /dev/REPLACE_WITH_TARGET_DISK --ignition-file strix-halo-server.ign
+```
+
+When the installer finishes, remove the live USB and reboot. Leave the computer connected to the network and allow uCore's first-boot setup to finish; it switches to the selected image and reboots during that process. Once it has booted into the installed system, sign in as `core` with the password you configured. See the selected variant's README for its post-login setup and application instructions.
+
+#### After installation
+
+To switch to a different image later, use `bootc` as described in [Switch an existing bootc system](#1-switch-an-existing-bootc-system).

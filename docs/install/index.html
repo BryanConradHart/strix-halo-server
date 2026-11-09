@@ -370,29 +370,28 @@
 
       const urlPattern = /^https?:\/\/[^\s#\\"]+$/;
       const variantYaml = (variant, values) => {
-        const fileLines = [
-          "directories:",
+        const storageLines = [
           ...variant.directories.flatMap((directory) => [
-            `  - path: ${directory.path}`,
-            `    mode: ${directory.mode}`,
-            "    user:",
-            `      name: ${directory.user}`,
-            "    group:",
-            `      name: ${directory.group}`,
+            `    - path: ${directory.path}`,
+            `      mode: ${directory.mode}`,
+            "      user:",
+            `        name: ${directory.user}`,
+            "      group:",
+            `        name: ${directory.group}`,
           ]),
-          "files:",
-          `  - path: ${variant.file}`,
-          "    mode: 384",
-          "    user:",
-          "      name: root",
-          "    group:",
-          "      name: root",
-          "    contents:",
-          "      inline: |",
-          ...variant.environment(values).split("\n").map((line) => `        ${line}`),
+          "  files:",
+          `    - path: ${variant.file}`,
+          "      mode: 384",
+          "      user:",
+          "        name: root",
+          "      group:",
+          "        name: root",
+          "      contents:",
+          "        inline: |",
+          ...variant.environment(values).split("\n").map((line) => `          ${line}`),
         ];
         return {
-          storage: fileLines.map((line) => `  ${line}`).join("\n"),
+          storage: storageLines.join("\n"),
           systemd: `    - name: ${variant.service}\n      enabled: true`,
         };
       };
