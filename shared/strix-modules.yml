@@ -31,6 +31,8 @@ modules:
         destination: /usr/lib/systemd/system/strix-first-boot.service
       - source: strix-halo-server-cosign.pub
         destination: /usr/share/pki/containers/strix-halo-server.pub
+      - source: strix-halo-server-registries.yaml
+        destination: /etc/containers/registries.d/strix-halo-server.yaml
 
   - type: script
     snippets:
