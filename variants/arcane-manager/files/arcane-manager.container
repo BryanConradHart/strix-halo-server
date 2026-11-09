@@ -9,13 +9,16 @@ Image=ghcr.io/getarcaneapp/manager:latest
 ContainerName=arcane-manager
 EnvironmentFile=/etc/arcane/manager.env
 Environment=PROJECTS_DIRECTORY=/opt/docker
-Environment=PUID=1000
-Environment=PGID=1000
+Environment=PUID=0
+Environment=PGID=0
+Environment=DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket
 PublishPort=3552:3552
 SecurityLabelDisable=true
 PodmanArgs=--cgroupns=host
 AutoUpdate=registry
 Volume=/run/podman/podman.sock:/var/run/docker.sock
+Volume=/run/dbus/system_bus_socket:/run/dbus/system_bus_socket
+Volume=/etc/containers/systemd:/etc/containers/systemd:rw
 Volume=arcane-manager-data:/app/data
 Volume=/var/home/core/arcane-projects:/opt/docker
 
