@@ -303,7 +303,7 @@
           service: "arcane-manager.service",
           file: "/etc/arcane/manager.env",
           directories: [
-            { path: "/etc/arcane", mode: 448, user: "root", group: "root" },
+            { path: "/etc/arcane", mode: 457, user: "root", group: "root" },
             { path: "/var/home/core/arcane-projects", mode: 488, user: "core", group: "core" },
           ],
           environment: (values) => `APP_URL=${values.url}\nENCRYPTION_KEY=${values.key}`,
@@ -314,7 +314,7 @@
           type: "agent",
           service: "arcane-edge-agent.service",
           file: "/etc/arcane/agent.env",
-          directories: [{ path: "/etc/arcane", mode: 448, user: "root", group: "root" }],
+          directories: [{ path: "/etc/arcane", mode: 457, user: "root", group: "root" }],
           environment: (values) => `AGENT_TOKEN=${values.token}\nMANAGER_API_URL=${values.url}`,
         },
         "ghcr.io/bryanconradhart/strix-halo-server-arcane-manager-direct": {
@@ -323,7 +323,7 @@
           type: "agent",
           service: "arcane-agent.service",
           file: "/etc/arcane/agent.env",
-          directories: [{ path: "/etc/arcane", mode: 448, user: "root", group: "root" }],
+          directories: [{ path: "/etc/arcane", mode: 457, user: "root", group: "root" }],
           environment: (values) => `AGENT_TOKEN=${values.token}\nMANAGER_API_URL=${values.url}`,
         },
         "ghcr.io/bryanconradhart/strix-halo-server-lemonade": {
@@ -332,7 +332,7 @@
           type: "lemonade",
           service: "lemonade-server.service",
           file: "/etc/lemonade/server.env",
-          directories: [{ path: "/etc/lemonade", mode: 448, user: "root", group: "root" }],
+          directories: [{ path: "/etc/lemonade", mode: 457, user: "root", group: "root" }],
           environment: (values) => `LEMONADE_API_KEY=${values.key}`,
         },
       };

@@ -32,7 +32,7 @@ if ! app_url=$(read_validated_input \
   exit 1
 fi
 
-install -d -o root -g root -m 0700 /etc/arcane
+install -d -o root -g root -m 0711 /etc/arcane
 install -d -o 1000 -g 1000 -m 0750 /var/home/core/arcane-projects
 encryption_key=$(openssl rand -hex 32)
 if [[ ! "$encryption_key" =~ ^[[:xdigit:]]{64}$ ]]; then
