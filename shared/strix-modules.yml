@@ -37,6 +37,8 @@ modules:
   - type: script
     snippets:
       - |
+        echo 'SUBSYSTEM=="accel", KERNEL=="accel*", GROUP="video", MODE="0660"' > /usr/lib/udev/rules.d/99-amdxdna-group.rules
+      - |
         chmod 0755 /usr/bin/strix-first-boot.sh
       - |
         set -euo pipefail
