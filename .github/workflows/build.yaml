@@ -85,3 +85,64 @@ jobs:
           docker push "${IMAGE}:${IMAGE_TAG}"
           cosign verify --key cosign.pub "${IMAGE}:latest" >/dev/null
           cosign verify --key cosign.pub "${IMAGE}:${IMAGE_TAG}" >/dev/null
+
+  build-and-publish-lemonade-docker:
+    name: Build and Publish Lemonade server Docker image
+    needs: build-tag
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute lowercase image name
+        id: meta
+        shell: bash
+        env:
+          IMAGE_TAG: ${{ needs.build-tag.outputs.tag }}
+        run: |
+          IMAGE="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/lemonade-server-halo"
+          echo "image=${IMAGE}" >> "$GITHUB_OUTPUT"
+          echo "tags=${IMAGE}:edge,${IMAGE}:latest,${IMAGE}:${IMAGE_TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push Lemonade Docker image
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: ./variants/lemonade/docker
+          file: ./variants/lemonade/docker/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Sign and verify published image tags
+        shell: bash
+        env:
+          IMAGE: ${{ steps.meta.outputs.image }}
+          IMAGE_TAG: ${{ needs.build-tag.outputs.tag }}
+          COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
+          COSIGN_PASSWORD: ""
+        run: |
+          set -euo pipefail
+          for tag in edge latest "${IMAGE_TAG}"; do
+            cosign sign --yes --key env://COSIGN_PRIVATE_KEY "${IMAGE}:${tag}"
+            cosign verify --key cosign.pub "${IMAGE}:${tag}" >/dev/null
+          done

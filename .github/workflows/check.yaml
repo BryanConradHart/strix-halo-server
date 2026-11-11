@@ -43,3 +43,37 @@ jobs:
           prune: true
           push: false
           skip_checkout: true
+
+  verify-lemonade-docker:
+    name: Verify Lemonade server Docker image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Lemonade Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./variants/lemonade/docker
+          file: ./variants/lemonade/docker/Dockerfile
+          push: false
+          load: true
+          tags: lemonade-server-halo:pr-test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Smoke-test container binaries
+        run: |
+          docker run --rm --entrypoint /bin/sh lemonade-server-halo:pr-test -c "
+            podman --version &&
+            lemonade --version &&
+            id -u | grep -q '^10001$'
+          "
