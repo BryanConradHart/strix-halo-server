@@ -2,6 +2,11 @@
 # giving it access to podman so it can use containerized engines
 FROM ghcr.io/lemonade-sdk/lemonade-server:edge
 
+LABEL org.opencontainers.image.title="Lemonade Server (with containerized engine support)" \
+      org.opencontainers.image.description="Application container wrapping lemonade-server with Podman CLI support for running containerized engines, in something like arcane" \
+      org.opencontainers.image.source="https://github.com" \
+      org.opencontainers.image.licenses="MIT"
+
 USER root
 
 # Install native podman client with its required Ubuntu shared libraries
