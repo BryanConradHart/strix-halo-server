@@ -12,6 +12,15 @@ storage:
       mode: 0754
   # Variant-specific credential files are inserted by the setup builder.
   YOUR_VARIANT_STORAGE_HERE
+# provision the kargs in butane as well as in bootc, so it works when provisioning via ostree or bootc
+kernel_arguments:
+  should_exist:
+    - amdgpu.gttsize=126976
+    - ttm.pages_limit=32505856
+    - ttm.page_pool_size=32505856
+    - amdttm.pages_limit=32505856
+    - amdttm.page_pool_size=32505856
+    - iommu=pt
 systemd:
   units:
     - name: ucore-unsigned-autorebase.service
