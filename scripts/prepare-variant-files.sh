@@ -9,7 +9,5 @@ fi
 
 variant_files="variants/$variant/files"
 mkdir -p "$variant_files"
-install -m 0644 shared/files/strix-first-boot.sh "$variant_files/strix-first-boot.sh"
-install -m 0644 shared/files/strix-first-boot.service "$variant_files/strix-first-boot.service"
+cp -a shared/files/. "$variant_files/"
 install -m 0644 cosign.pub "$variant_files/strix-halo-server-cosign.pub"
-install -m 0644 shared/files/strix-halo-server-registries.yaml "$variant_files/strix-halo-server-registries.yaml"
