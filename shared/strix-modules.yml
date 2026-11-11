@@ -37,6 +37,8 @@ modules:
         destination: /usr/lib/udev/rules.d/99-amd-accelerator-groups.rules
 
   - type: script
+    scripts:
+      - provision-user.sh
     snippets:
       - |
         chmod 0755 /usr/bin/strix-first-boot.sh
