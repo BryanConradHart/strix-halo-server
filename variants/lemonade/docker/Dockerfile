@@ -2,20 +2,17 @@
 # giving it access to podman so it can use containerized engines
 FROM ghcr.io/lemonade-sdk/lemonade-server:edge
 
-LABEL org.opencontainers.image.title="Lemonade Server (with containerized engine support)" \
-      org.opencontainers.image.description="Application container wrapping lemonade-server with Podman CLI support for running containerized engines, in something like arcane" \
-      org.opencontainers.image.source="https://github.com" \
-      org.opencontainers.image.licenses="MIT"
-
 USER root
 
-# Install native podman client with its required Ubuntu shared libraries
+# Install podman and runtime dependencies (crun, netavark, fuse-overlayfs, etc.)
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends podman && \
+    apt-get install -y --no-install-recommends \
+      podman crun fuse-overlayfs slirp4netns uidmap && \
     rm -rf /var/lib/apt/lists/*
 
-# Point Podman's client library to the mounted host socket
-ENV CONTAINER_HOST=unix:///run/podman/podman.sock
+# Configure nested Podman storage and container drivers
+RUN mkdir -p /etc/containers && \
+    printf '[storage]\ndriver = "overlay"\nrunroot = "/run/containers/storage"\ngraphroot = "/var/lib/containers/storage"\n[storage.options.overlay]\nmount_program = "/usr/bin/fuse-overlayfs"\n' > /etc/containers/storage.conf && \
+    printf '[engine]\ncgroup_manager = "cgroupfs"\nevents_logger = "file"\n' > /etc/containers/containers.conf
 
-# Return to Lemonade's unprivileged runtime user
 USER 10001
