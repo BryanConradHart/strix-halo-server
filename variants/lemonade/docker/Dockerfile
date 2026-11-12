@@ -11,9 +11,10 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Configure nested Podman storage and container drivers
-RUN id -u 10001 >/dev/null 2>&1 || useradd -u 10001 -m -d /opt/lemonade -s /bin/bash lemonade && \
-    echo "10001:100000:65536" > /etc/subuid && \
-    echo "10001:100000:65536" > /etc/subgid && \
+RUN id -u lemonade >/dev/null 2>&1 || useradd -u 10001 -m -d /opt/lemonade -s /bin/bash lemonade && \
+    echo "lemonade:100000:65536" > /etc/subuid && \
+    echo "lemonade:100000:65536" > /etc/subgid && \
+
     mkdir -p /etc/containers /opt/lemonade/.local/share/containers /var/lib/lemonade/huggingface && \
     printf '[storage]\ndriver = "overlay"\n[storage.options.overlay]\nmount_program = "/usr/bin/fuse-overlayfs"\n' > /etc/containers/storage.conf && \
     printf '[engine]\ncgroup_manager = "cgroupfs"\nevents_logger = "file"\n' > /etc/containers/containers.conf && \
