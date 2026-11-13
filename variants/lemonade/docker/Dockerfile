@@ -17,7 +17,7 @@ RUN id -u lemonade >/dev/null 2>&1 || useradd -u 10001 -m -d /opt/lemonade -s /b
 
     mkdir -p /etc/containers /run/netns /opt/lemonade/.local/share/containers /var/lib/lemonade/huggingface && \
     printf '[storage]\ndriver = "overlay"\n[storage.options.overlay]\nmount_program = "/usr/bin/fuse-overlayfs"\n' > /etc/containers/storage.conf && \
-    printf '[engine]\ncgroup_manager = "cgroupfs"\nevents_logger = "file"\n' > /etc/containers/containers.conf && \
+    printf '[engine]\n cgroup_manager = "cgroupfs"\n events_logger = "file"\n default_ulimits = ["memlock=-1:-1"]\n[network]\n network_backend = "netavark"\n' > /etc/containers/containers.conf && \
     chown -R 10001:10001 /opt/lemonade /var/lib/lemonade/huggingface
 
 USER 10001
