@@ -6,7 +6,8 @@ modules:
       - "ttm.page_pool_size=32505856"
       - "amdttm.pages_limit=32505856"
       - "amdttm.page_pool_size=32505856"
-      - "iommu=pt"
+      - "iommu=off"
+      - "amd_iommu=off"
 
   - type: dnf
     install:
