@@ -57,7 +57,7 @@ install -d -o root -g root -m 0711 /etc/arcane
 umask 077
 config_tmp=$(mktemp /etc/arcane/agent.env.XXXXXX)
 trap 'rm -f "$config_tmp"' EXIT
-printf 'AGENT_TOKEN=%s\nMANAGER_API_URL=%s\n' "$agent_token" "$manager_api_url" > "$config_tmp"
+printf 'ARCANE_AGENT_TOKEN=%s\nARCANE_MANAGER_API_URL=%s\n' "$agent_token" "$manager_api_url" > "$config_tmp"
 chown root:root "$config_tmp"
 chmod 0600 "$config_tmp"
 

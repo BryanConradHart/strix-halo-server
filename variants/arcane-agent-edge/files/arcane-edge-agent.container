@@ -8,8 +8,8 @@ After=podman.socket
 Image=ghcr.io/getarcaneapp/agent:latest
 ContainerName=arcane-edge-agent
 AutoUpdate=registry
-Environment=EDGE_AGENT=true
-Environment=EDGE_TRANSPORT=poll
+Environment=ARCANE_AGENT=true
+Environment=ARCANE_AGENT_TRANSPORT=auto
 Environment=DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket
 EnvironmentFile=/etc/arcane/agent.env
 SecurityLabelDisable=true

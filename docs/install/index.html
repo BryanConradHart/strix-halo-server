@@ -89,7 +89,6 @@
         <option value="ghcr.io/bryanconradhart/strix-halo-server">Base</option>
         <option value="ghcr.io/bryanconradhart/strix-halo-server-arcane-manager">Arcane Manager</option>
         <option value="ghcr.io/bryanconradhart/strix-halo-server-arcane-agent-edge">Arcane Edge Agent</option>
-        <option value="ghcr.io/bryanconradhart/strix-halo-server-arcane-manager-direct">Arcane Direct Agent</option>
         <option value="ghcr.io/bryanconradhart/strix-halo-server-ai-toolbox-cockpit">AI Toolbox Cockpit</option>
         <option value="ghcr.io/bryanconradhart/strix-halo-server-lemonade">Lemonade Server</option>
       </select>
@@ -194,7 +193,6 @@
         "ghcr.io/bryanconradhart/strix-halo-server",
         "ghcr.io/bryanconradhart/strix-halo-server-arcane-manager",
         "ghcr.io/bryanconradhart/strix-halo-server-arcane-agent-edge",
-        "ghcr.io/bryanconradhart/strix-halo-server-arcane-manager-direct",
         "ghcr.io/bryanconradhart/strix-halo-server-ai-toolbox-cockpit",
         "ghcr.io/bryanconradhart/strix-halo-server-lemonade",
       ]);
@@ -306,7 +304,7 @@
             { path: "/etc/arcane", mode: 457, user: "root", group: "root" },
             { path: "/var/home/core/arcane-projects", mode: 488, user: "core", group: "core" },
           ],
-          environment: (values) => `APP_URL=${values.url}\nENCRYPTION_KEY=${values.key}`,
+          environment: (values) => `ARCANE_APP_URL=${values.url}\nARCANE_ENCRYPTION_KEY=${values.key}`,
         },
         "ghcr.io/bryanconradhart/strix-halo-server-arcane-agent-edge": {
           name: "Arcane Edge Agent",
@@ -315,16 +313,7 @@
           service: "arcane-edge-agent.service",
           file: "/etc/arcane/agent.env",
           directories: [{ path: "/etc/arcane", mode: 457, user: "root", group: "root" }],
-          environment: (values) => `AGENT_TOKEN=${values.token}\nMANAGER_API_URL=${values.url}`,
-        },
-        "ghcr.io/bryanconradhart/strix-halo-server-arcane-manager-direct": {
-          name: "Arcane Direct Agent",
-          description: "Creates /etc/arcane/agent.env and enables the Arcane Direct Agent service.",
-          type: "agent",
-          service: "arcane-agent.service",
-          file: "/etc/arcane/agent.env",
-          directories: [{ path: "/etc/arcane", mode: 457, user: "root", group: "root" }],
-          environment: (values) => `AGENT_TOKEN=${values.token}\nMANAGER_API_URL=${values.url}`,
+          environment: (values) => `ARCANE_AGENT_TOKEN=${values.token}\nARCANE_MANAGER_API_URL=${values.url}`,
         },
         "ghcr.io/bryanconradhart/strix-halo-server-lemonade": {
           name: "Lemonade Server",
