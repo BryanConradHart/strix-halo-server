@@ -8,7 +8,7 @@ After=podman.socket
 Image=ghcr.io/getarcaneapp/manager:latest
 ContainerName=arcane-manager
 EnvironmentFile=/etc/arcane/manager.env
-Environment=PROJECTS_DIRECTORY=/opt/docker
+Environment=ARCANE_PROJECTS_DIRECTORY=/opt/docker
 Environment=PUID=0
 Environment=PGID=0
 Environment=DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket

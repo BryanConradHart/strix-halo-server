@@ -43,7 +43,7 @@ fi
 umask 077
 config_tmp=$(mktemp /etc/arcane/manager.env.XXXXXX)
 trap 'rm -f "$config_tmp"' EXIT
-printf 'APP_URL=%s\nENCRYPTION_KEY=%s\n' "$app_url" "$encryption_key" > "$config_tmp"
+printf 'ARCANE_APP_URL=%s\nARCANE_ENCRYPTION_KEY=%s\n' "$app_url" "$encryption_key" > "$config_tmp"
 chown root:root "$config_tmp"
 chmod 0600 "$config_tmp"
 

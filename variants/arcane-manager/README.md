@@ -16,9 +16,15 @@ After installing the image and signing in, setup is offered automatically if it 
 
 The setup creates an encryption key and saves it with the URL in `/etc/arcane/manager.env`, a root-only host file. Back up this file together with Arcane's data. The login offer is suppressed if the file exists.
 
-Open the configured URL (direct access is `http://<host>:3552`), sign in with the initial credentials `arcane` / `arcane-admin`, and change the password. Restrict access to trusted administrators; use HTTPS through a reverse proxy when accessing the manager remotely.
+Open the configured URL (direct access is `http://<host>:3552`) and sign in as `arcane`. Arcane generates the initial password on first start and writes it to `initial-admin-password` inside its data volume, then requires a new password at first login:
 
-If you need to change the URL after setup, edit `APP_URL` in `/etc/arcane/manager.env` with `sudoedit`, keep the existing `ENCRYPTION_KEY` unchanged, then restart the manager:
+```bash
+sudo podman exec arcane-manager cat /app/data/initial-admin-password
+```
+
+Restrict access to trusted administrators; use HTTPS through a reverse proxy when accessing the manager remotely.
+
+If you need to change the URL after setup, edit `ARCANE_APP_URL` in `/etc/arcane/manager.env` with `sudoedit`, keep the existing `ARCANE_ENCRYPTION_KEY` unchanged, then restart the manager:
 
 ```bash
 sudo systemctl restart arcane-manager.service
