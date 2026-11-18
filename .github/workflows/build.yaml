@@ -2,7 +2,7 @@ name: Build and Publish Strix Halo Image
 
 on:
   schedule:
-    - cron: '0 0 * * 1' # Rebuilds automatically every Monday at midnight to pull upstream security fixes
+    - cron: '0 1 * * 1' # Rebuilds automatically every Monday at 1 AM UTC, after single-purpose-os's midnight rebuild publishes fresh Arcane base images
   push:
     branches:
       - main # Triggers a fresh build whenever you push or merge to main

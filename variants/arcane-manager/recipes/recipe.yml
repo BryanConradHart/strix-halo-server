@@ -1,26 +1,7 @@
 name: strix-halo-server-arcane-manager
 description: Strix Halo bootc image with Arcane Manager
-base-image: ghcr.io/ublue-os/ucore
-image-version: stable
+base-image: ghcr.io/bryanconradhart/single-purpose-os-arcane-manager
+image-version: latest
 
 modules:
   - from-file: ../../../shared/strix-modules.yml
-
-  - type: files
-    files:
-      - source: arcane-manager-enroll.sh
-        destination: /usr/libexec/arcane-manager-enroll.sh
-      - source: 90-arcane-manager-setup-notice.sh
-        destination: /etc/profile.d/90-arcane-manager-setup-notice.sh
-      - source: arcane-manager.container
-        destination: /usr/share/containers/systemd/arcane-manager.container
-
-  - type: script
-    snippets:
-      - chmod 0755 /usr/libexec/arcane-manager-enroll.sh
-
-  - type: systemd
-    system:
-      enabled:
-        - podman.socket
-        - podman-auto-update.timer
