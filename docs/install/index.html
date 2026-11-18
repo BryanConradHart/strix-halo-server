@@ -88,7 +88,7 @@
       <select id="image" required>
         <option value="ghcr.io/bryanconradhart/strix-halo-server">Base</option>
         <option value="ghcr.io/bryanconradhart/strix-halo-server-arcane-manager">Arcane Manager</option>
-        <option value="ghcr.io/bryanconradhart/strix-halo-server-arcane-agent-edge">Arcane Edge Agent</option>
+        <option value="ghcr.io/bryanconradhart/strix-halo-server-arcane-agent">Arcane Agent</option>
         <option value="ghcr.io/bryanconradhart/strix-halo-server-ai-toolbox-cockpit">AI Toolbox Cockpit</option>
         <option value="ghcr.io/bryanconradhart/strix-halo-server-lemonade">Lemonade Server</option>
       </select>
@@ -192,7 +192,7 @@
       const allowedImages = new Set([
         "ghcr.io/bryanconradhart/strix-halo-server",
         "ghcr.io/bryanconradhart/strix-halo-server-arcane-manager",
-        "ghcr.io/bryanconradhart/strix-halo-server-arcane-agent-edge",
+        "ghcr.io/bryanconradhart/strix-halo-server-arcane-agent",
         "ghcr.io/bryanconradhart/strix-halo-server-ai-toolbox-cockpit",
         "ghcr.io/bryanconradhart/strix-halo-server-lemonade",
       ]);
@@ -306,11 +306,11 @@
           ],
           environment: (values) => `ARCANE_APP_URL=${values.url}\nARCANE_ENCRYPTION_KEY=${values.key}`,
         },
-        "ghcr.io/bryanconradhart/strix-halo-server-arcane-agent-edge": {
-          name: "Arcane Edge Agent",
-          description: "Creates /etc/arcane/agent.env and enables the Arcane Edge Agent service.",
+        "ghcr.io/bryanconradhart/strix-halo-server-arcane-agent": {
+          name: "Arcane Agent",
+          description: "Creates /etc/arcane/agent.env and enables the Arcane Agent service.",
           type: "agent",
-          service: "arcane-edge-agent.service",
+          service: "arcane-agent.service",
           file: "/etc/arcane/agent.env",
           directories: [{ path: "/etc/arcane", mode: 457, user: "root", group: "root" }],
           environment: (values) => `ARCANE_AGENT_TOKEN=${values.token}\nARCANE_MANAGER_API_URL=${values.url}`,

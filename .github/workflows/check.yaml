@@ -15,7 +15,7 @@ jobs:
         variant:
           - base
           - arcane-manager
-          - arcane-agent-edge
+          - arcane-agent
           - ai-toolbox-cockpit
           - lemonade
     permissions:

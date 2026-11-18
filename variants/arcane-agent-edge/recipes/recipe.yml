@@ -1,7 +1,0 @@
-name: strix-halo-server-arcane-agent-edge
-description: Strix Halo bootc image with the Arcane Edge Agent
-base-image: ghcr.io/bryanconradhart/single-purpose-os-arcane-agent-edge
-image-version: latest
-
-modules:
-  - from-file: ../../../shared/strix-modules.yml

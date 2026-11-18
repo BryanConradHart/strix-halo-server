@@ -38,8 +38,8 @@ jobs:
             image: strix-halo-server
           - variant: arcane-manager
             image: strix-halo-server-arcane-manager
-          - variant: arcane-agent-edge
-            image: strix-halo-server-arcane-agent-edge
+          - variant: arcane-agent
+            image: strix-halo-server-arcane-agent
           - variant: ai-toolbox-cockpit
             image: strix-halo-server-ai-toolbox-cockpit
           - variant: lemonade
