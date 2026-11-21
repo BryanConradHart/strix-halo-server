@@ -16,7 +16,7 @@ For a bare-metal installation, the [Butane setup builder](https://bryanconradhar
 
 After installing the image and signing in, setup is offered automatically if it has not been completed. It configures the URL administrators will use to reach Arcane Manager.
 
-The setup creates an encryption key and saves it with the URL in `/etc/arcane/manager.env`, a root-only host file. Back up this file together with Arcane's data. The login offer is suppressed if the file exists.
+The setup saves the URL and encryption key to `/etc/arcane/manager.env` (root-only). Back the file up together with Arcane's data: if the key is lost, existing manager data becomes inaccessible. Never change the key once set — existing data cannot be re-encrypted.
 
 Open the configured URL (direct access is `http://<host>:3552`) and sign in as `arcane`. Arcane generates the initial password on first start and writes it to `initial-admin-password` inside its data volume, then requires a new password at first login:
 
@@ -26,7 +26,7 @@ sudo podman exec arcane-manager cat /app/data/initial-admin-password
 
 Restrict access to trusted administrators; use HTTPS through a reverse proxy when accessing the manager remotely.
 
-If you need to change the URL after setup, edit `ARCANE_APP_URL` in `/etc/arcane/manager.env` with `sudoedit`, keep the existing `ARCANE_ENCRYPTION_KEY` unchanged, then restart the manager:
+If you change the URL later, edit `ARCANE_APP_URL` in `/etc/arcane/manager.env` with `sudoedit`, then restart the manager:
 
 ```bash
 sudo systemctl restart arcane-manager.service
@@ -52,4 +52,4 @@ sudo bootc switch --transport registry ghcr.io/bryanconradhart/strix-halo-server
 sudo systemctl reboot
 ```
 
-See the [published image page](https://github.com/BryanConradHart/strix-halo-server/pkgs/container/strix-halo-server-arcane-manager) for available tags. Arcane Manager's container image is checked and updated by Podman's automatic update service. See the [Arcane installation guide](https://getarcane.app/docs/get-started/installation) and [remote environment guide](https://getarcane.app/docs/remote/environments) for administration and agent setup.
+See the [published image page](https://github.com/BryanConradHart/strix-halo-server/pkgs/container/strix-halo-server-arcane-manager) for available tags. Arcane Manager's container image updates itself through Podman's automatic update service. See the [Arcane installation guide](https://getarcane.app/docs/get-started/installation), the [Podman setup guide](https://getarcane.app/docs/podman/setup), and the [agents guide](https://getarcane.app/docs/remote/agents) for administration and remote environment setup.
