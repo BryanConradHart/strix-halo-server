@@ -58,7 +58,11 @@ jobs:
 
       # only needed for cosign v3 breaking change hack
       - name: Install Cosign v2
-        uses: sigstore/cosign-installer@v3.10.1
+        uses: sigstore/cosign-installer@v3
+        with:
+          cosign-release: 'v2.6.5'
+          install-dir: '/usr/local/bin'
+          use-sudo: 'true'
 
       - name: Build and Publish Container Image
         uses: blue-build/github-action@v1
@@ -119,6 +123,10 @@ jobs:
             VERIFY_FLAGS+=(--new-bundle-format=false)
           fi
           cosign clean --force "${CLEAN_FLAGS[@]}" "${IMAGE}@${DIGEST}"
+          # in case recursive flag doesn't work, loop it all
+          for CHILD_DIGEST in $(docker manifest inspect "${IMAGE}@${DIGEST}" | jq -r '.manifests[]?.digest // empty'); do
+            cosign clean --force "${IMAGE}@${CHILD_DIGEST}"
+          done
           cosign sign --yes "${SIGN_FLAGS[@]}" --key env://COSIGN_PRIVATE_KEY "${IMAGE}@${DIGEST}"
           # end temporary section
 
@@ -145,7 +153,11 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Install Cosign
-        uses: sigstore/cosign-installer@v3.10.1 # pin minor and patch version for cosign v3 hack. switch to @v3 once fixed
+        uses: sigstore/cosign-installer@v3
+        with: # only need these arguments due to the cosign v3 breaking change
+          cosign-release: 'v2.6.5'
+          install-dir: '/usr/local/bin'
+          use-sudo: 'true'
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
