@@ -101,40 +101,21 @@ jobs:
 
           # temporary for cosign v3 breaking change
           DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' "${IMAGE}:latest" | cut -d'@' -f2)
-          CLEAN_FLAGS=()
-          SIGN_FLAGS=()
-          VERIFY_FLAGS=()
+          # Sign the top-level index digest cleanly
+          cosign clean --force "${IMAGE}@${DIGEST}"
+          cosign sign --yes --key env://COSIGN_PRIVATE_KEY "${IMAGE}@${DIGEST}"
 
-          if cosign clean --help 2>&1 | grep -q -- "--recursive"; then
-            CLEAN_FLAGS+=(--recursive)
-          fi
-          if cosign sign --help 2>&1 | grep -q -- "--recursive"; then
-            SIGN_FLAGS+=(--recursive)
-          fi
-          if cosign sign --help 2>&1 | grep -q -- "--new-bundle-format"; then
-            SIGN_FLAGS+=(--new-bundle-format=false)
-          fi
-          if cosign sign --help 2>&1 | grep -q -- "--use-signing-config"; then
-            SIGN_FLAGS+=(--use-signing-config=false)
-          elif cosign sign --help 2>&1 | grep -q -- "--no-signing-config"; then
-            SIGN_FLAGS+=(--no-signing-config=true)
-          fi
-          if cosign verify --help 2>&1 | grep -q -- "--new-bundle-format"; then
-            VERIFY_FLAGS+=(--new-bundle-format=false)
-          fi
-          cosign clean --force "${CLEAN_FLAGS[@]}" "${IMAGE}@${DIGEST}"
-          # in case recursive flag doesn't work, loop it all
-          for CHILD_DIGEST in $(docker manifest inspect "${IMAGE}@${DIGEST}" | jq -r '.manifests[]?.digest // empty'); do
+          # Clean and sign each platform manifest directly so docker-manifest-digest matches each platform
+          for CHILD_DIGEST in $(skopeo inspect --raw "docker://${IMAGE}@${DIGEST}" | jq -r '.manifests[]?.digest // empty'); do
             cosign clean --force "${IMAGE}@${CHILD_DIGEST}"
+            cosign sign --yes --key env://COSIGN_PRIVATE_KEY "${IMAGE}@${CHILD_DIGEST}"
           done
-          cosign sign --yes "${SIGN_FLAGS[@]}" --key env://COSIGN_PRIVATE_KEY "${IMAGE}@${DIGEST}"
           # end temporary section
 
-          # remove "${VERIFY_FLAGS[@]}" after cosign v3 issue is fixed
           docker tag "${IMAGE}:latest" "${IMAGE}:${IMAGE_TAG}"
           docker push "${IMAGE}:${IMAGE_TAG}"
-          cosign verify "${VERIFY_FLAGS[@]}" --key cosign.pub "${IMAGE}:latest" >/dev/null
-          cosign verify "${VERIFY_FLAGS[@]}" --key cosign.pub "${IMAGE}:${IMAGE_TAG}" >/dev/null
+          cosign verify --key cosign.pub "${IMAGE}:latest" >/dev/null
+          cosign verify --key cosign.pub "${IMAGE}:${IMAGE_TAG}" >/dev/null
 
   build-and-publish-lemonade-docker:
     name: Build and Publish Lemonade server Docker image
@@ -200,25 +181,9 @@ jobs:
           COSIGN_PASSWORD: ""
         run: |
           set -euo pipefail
-
-          # temporary due to V3 cosign breaking change
-          SIGN_FLAGS=()
-          VERIFY_FLAGS=()
-          if cosign sign --help 2>&1 | grep -q -- "--new-bundle-format"; then
-            SIGN_FLAGS+=(--new-bundle-format=false)
-          fi
-          if cosign sign --help 2>&1 | grep -q -- "--use-signing-config"; then
-            SIGN_FLAGS+=(--use-signing-config=false)
-          elif cosign sign --help 2>&1 | grep -q -- "--no-signing-config"; then
-            SIGN_FLAGS+=(--no-signing-config=true)
-          fi
-          if cosign verify --help 2>&1 | grep -q -- "--new-bundle-format"; then
-            VERIFY_FLAGS+=(--new-bundle-format=false)
-          fi
-
-          # remove "${SIGN_FLAGS[@]}" and "${VERIFY_FLAGS[@]}" once the V3 cosign issue is fixed
-          cosign sign --yes "${SIGN_FLAGS[@]}" --key env://COSIGN_PRIVATE_KEY "${IMAGE}@${DIGEST}"
+          cosign clean --force "${IMAGE}@${DIGEST}"
+          cosign sign --yes --key env://COSIGN_PRIVATE_KEY "${IMAGE}@${DIGEST}"
           for tag in edge latest "${IMAGE_TAG}"; do
-            cosign verify "${VERIFY_FLAGS[@]}" --key cosign.pub "${IMAGE}:${tag}" >/dev/null
+            cosign verify --key cosign.pub "${IMAGE}:${tag}" >/dev/null
           done
 
