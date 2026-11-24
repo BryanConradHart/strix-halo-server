@@ -63,3 +63,7 @@ modules:
       enabled:
         - tuned.service
         - strix-first-boot.service
+        
+- type: script
+  snippets:
+    - "rm -f /etc/containers/registries.d/single-purpose-os.yaml"
