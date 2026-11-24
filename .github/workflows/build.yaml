@@ -190,18 +190,6 @@ jobs:
           fi
           if cosign verify --help 2>&1 | grep -q -- "--new-bundle-format"; then
             VERIFY_FLAGS+=(--new-bundle-format=false)
-          fiSIGN_FLAGS=()
-          VERIFY_FLAGS=()
-          if cosign sign --help 2>&1 | grep -q -- "--new-bundle-format"; then
-            SIGN_FLAGS+=(--new-bundle-format=false)
-          fi
-          if cosign sign --help 2>&1 | grep -q -- "--use-signing-config"; then
-            SIGN_FLAGS+=(--use-signing-config=false)
-          elif cosign sign --help 2>&1 | grep -q -- "--no-signing-config"; then
-            SIGN_FLAGS+=(--no-signing-config=true)
-          fi
-          if cosign verify --help 2>&1 | grep -q -- "--new-bundle-format"; then
-            VERIFY_FLAGS+=(--new-bundle-format=false)
           fi
 
           # remove "${SIGN_FLAGS[@]}" and "${VERIFY_FLAGS[@]}" once the V3 cosign issue is fixed
