@@ -56,14 +56,6 @@ jobs:
       - name: Prepare shared files
         run: ./scripts/prepare-variant-files.sh "${{ matrix.variant }}"
 
-      # only needed for cosign v3 breaking change hack
-      - name: Install Cosign v2
-        uses: sigstore/cosign-installer@v3
-        with:
-          cosign-release: 'v2.6.5'
-          install-dir: '/usr/local/bin'
-          use-sudo: 'true'
-
       - name: Build and Publish Container Image
         uses: blue-build/github-action@v1
         with:
@@ -85,6 +77,15 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+
+      # only needed for cosign v3 breaking change hack
+      - name: Install Cosign v2
+        uses: sigstore/cosign-installer@v4.1.3
+        with:
+          cosign-release: 'v2.6.5'
+          install-dir: '/usr/local/bin'
+          use-sudo: 'true'
+          
       - name: Publish a versioned image tag
         shell: bash
         env:
@@ -134,7 +135,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Install Cosign
-        uses: sigstore/cosign-installer@v3
+        uses: sigstore/cosign-installer@v4.1.3
         with: # only need these arguments due to the cosign v3 breaking change
           cosign-release: 'v2.6.5'
           install-dir: '/usr/local/bin'
@@ -186,4 +187,3 @@ jobs:
           for tag in edge latest "${IMAGE_TAG}"; do
             cosign verify --key cosign.pub "${IMAGE}:${tag}" >/dev/null
           done
-
