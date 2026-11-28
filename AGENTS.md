@@ -1,36 +1,23 @@
-# Project Specification
+# Agent Guide
 
-This repository defines easy-to-maintain, easy-to-deploy bootable images for AMD Strix Halo systems, with 128 GB memory configurations as the primary target. It publishes a clean base image and a small set of optional, targeted image variants. The root [README.md](README.md) catalogs the images and links to variant-specific installation and administration instructions.
+This file is for AI agents working in this repository. It contains agent guidance only, never product requirements or user documentation.
 
-## Product requirements
+## The documents
 
-- Provide a reproducible, bootable system suited to local AI, inference, development, and self-hosted compute workloads on Strix Halo hardware.
-- Keep the base image lightweight, clean, predictable, and maintainable over time. Do not turn it into a workload-specific appliance; workload toolchains and custom services should remain optional variants.
-- Build every image variant directly from the same uCore base and shared Strix configuration. Do not make a published variant a build prerequisite for another variant in this repository; build variants in parallel from the same source revision. The Arcane variants are the exception by design: they extend the published [single-purpose-os](https://github.com/BryanConradHart/single-purpose-os) images (`single-purpose-os-arcane-manager` and `single-purpose-os-arcane-agent`) and add only the shared Strix hardware configuration. This is allowed because those base images are already published by another repository and are not built in this repository's pipeline.
-- Keep variant-specific recipes, assets, and documentation together under `variants/<name>/`. Keep configuration common to all variants in a shared location, with one source of truth.
-- Enable uCore's rootful `podman-restart.service` in shared configuration so rootful Podman containers with an `always` restart policy restart at boot in every variant.
-- For rootful Quadlet services intended to track registry tags, set `AutoUpdate=registry` and enable `podman-auto-update.timer` in the variant; container image updates are separate from bootc OS updates.
-- Give each published image a distinct, identifiable name and provide a variant-specific README linked from the root README.
-- Provide assets optimized for 128 GB Strix Halo systems. Support for other Strix Halo memory configurations is not a requirement.
-- Treat ease of adoption and maintenance as a product requirement: installing and keeping this image updated must be easier than manually reproducing its kernel arguments, hardware configuration, and software setup on an existing Linux homelab server. Provide at least one documented, repeatable installation path that applies the image's configuration without asking users to recreate recipe steps by hand, and support routine updates without repeating installation. uCore and Butane/Ignition are acceptable when the complete workflow remains straightforward. Never bake machine-specific credentials into the image. Keep workload-specific additions optional.
-- Document existing-host and bare-metal installation. For bare metal, link to uCore's official first-install instructions, offer the uCore template or graphical Butane utility, and recommend a live desktop with the browser and CLI needed to prepare and install in one session. Both preparation options must configure uCore's two bootstrap stages for the selected project image. SSH key login remains optional; do not require a project-specific provisioning service or full manual configuration authoring.
-- For each variant with an interactive first-login setup script, the graphical Butane utility must let users choose between that interactive setup and provisioning the setup values in Butane. Interactive first-login setup must be the default. In this mode, generated Butane must omit variant-specific credentials and setup outputs so the existing login setup remains usable. In Butane mode, require every value needed by that variant's setup script and generate the corresponding credential files, permissions, directories, and enabled services. Variant-only fields must be required if and only if Butane provisioning is selected for that variant. Keep variant README instructions and builder links consistent with these choices.
-- The core account must always have a required password credential in the generated configuration: accept a SHA-512-crypt hash or a plain-text password that is hashed locally in the browser. SSH public keys and key files are optional and must not become required for either setup mode.
-- Protect installer inputs because their exposure can grant host or application access: the graphical utility must not send user-provided passwords, hashes, tokens, API keys, encryption keys, SSH public-key contents, or other credential values off-device (except as part of the user's generated configuration), save them in application-controlled storage, or log them. Password hashing and random credential generation must happen locally in the browser. Fetching the shared Butane template and displaying or downloading the generated configuration are allowed. Warn users that a downloaded configuration containing credentials must be kept private.
+- [SPEC.md](SPEC.md) — the requirements: functional (what the images do) and non-functional (security, reproducibility, ease of maintenance, validation).
+- [DECISIONS.md](DECISIONS.md) — the reasoning behind spec choices (numbered decisions). Explains *why*; the spec states *what*. Only non-obvious choices qualify: ones someone would get wrong or undo without the rationale.
+- [README.md](README.md) — documentation for end users, not developers. Everything in it must be useful and actionable to an end user: concise, with no mechanism explanations or developer-facing detail.
+- This file — agent rules.
 
-## Deployment and lifecycle requirements
+Requirements, decisions, and rules are each grouped by topic: place a new or edited item next to the items it relates to most closely, and order sections to mirror SPEC.md where possible.
 
-- Support clean bare-metal installation through the specified uCore Fedora CoreOS and Butane/Ignition bootstrap, ending on the selected project image without a follow-up switch. Do not present direct bootc disk installation or a locally generated image ISO as a complete first-install path unless it also provisions a usable login account. Do not generate or publish installer ISOs or create GitHub Releases in CI; publish identifiable container image tags instead.
-- Document the bootc and bare-metal installation paths in the root README and link to them from every variant README. Do not present WSL as a tested bare-metal installation environment.
-- Make routine updates reliable and low-effort, without requiring users to repeat the initial installation process.
-- Make container image tags reproducible and identifiable for every variant. Users should be able to follow the latest image or select a specific version for repeatable deployment.
-- Keep deployment and update behavior consistent across supported installation paths, and update the README and this specification when those user-facing workflows change.
+## Editing rules
 
-## Change and validation guidelines
+- When editing code, recipes, units, scripts, or docs: follow the spec and do not violate it.
+- When editing SPEC.md: follow DECISIONS.md and do not violate it.
+- On a conflict (a change that satisfies one document by violating another): stop and ask the user whether to change the spec or the decision.
 
-- Prefer changes that reduce operational complexity and keep the base image and variants maintainable.
-- Keep additions aligned with the base-platform scope; avoid adding optional workload stacks to the default image.
-- Validate every image recipe in CI and publish all variants from the build workflow. Keep builds independent and parallel; CI must not generate installer ISOs. Stage shared BlueBuild file assets into each variant's build context before validation and publishing.
-- Keep credentials and machine-specific secrets out of recipes, source files, image builds, and published images. Provision secrets on the installed host.
-- Validate changes against the requirements they affect, especially hardware compatibility, installation, updates, and reproducibility. Update root and variant-specific documentation when their workflows change.
-- Update related user-facing documentation when behavior or supported workflows change.
+## Writing rules
+
+- Keep each requirement's length and emphasis proportional to its risk: how likely it is to be ignored, and how bad the consequences are if it is.
+- Keep replies to the user concise.

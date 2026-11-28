@@ -1,7 +1,7 @@
 name: strix-halo-server-ai-toolbox-cockpit
 description: Strix Halo bootc image with AI Toolbox Cockpit
-base-image: ghcr.io/ublue-os/ucore
-image-version: stable
+base-image: ghcr.io/bryanconradhart/single-purpose-os-base
+image-version: latest
 
 modules:
   - from-file: ../../../shared/strix-modules.yml

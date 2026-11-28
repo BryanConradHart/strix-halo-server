@@ -4,7 +4,29 @@ This image packages [AI Toolbox Cockpit](https://github.com/kyuz0/ai-toolbox-coc
 
 Image: `ghcr.io/bryanconradhart/strix-halo-server-ai-toolbox-cockpit`
 
-Install this image using the shared [installation instructions](../../README.md). There is no first-boot enrollment or host-wide setup; start the app from the signed-in user's shell as shown below.
+## Install
+
+On a system already managed by bootc, switch to this image and reboot:
+
+```bash
+sudo bootc switch --transport registry ghcr.io/bryanconradhart/strix-halo-server-ai-toolbox-cockpit:latest
+sudo systemctl reboot
+```
+
+For a clean installation on new hardware, boot a live environment such as the [Fedora Workstation Live image](https://fedoraproject.org), connect to the network, and install the image directly onto the target drive. Identify the drive with `lsblk -o NAME,SIZE,MODEL,TYPE,MOUNTPOINTS` — the command below erases it, so double-check the device path and do not select the live USB:
+
+```bash
+sudo podman run --rm --privileged --pid=host \
+  -v /var/lib/containers:/var/lib/containers \
+  -v /dev:/dev \
+  --security-opt label=type:unconfined_t \
+  ghcr.io/bryanconradhart/strix-halo-server-ai-toolbox-cockpit:latest \
+  bootc install to-disk --wipe --generic-image /dev/REPLACE_WITH_TARGET_DISK
+```
+
+Reboot, then sign in as `core` with the temporary password `core` and choose a new password. For a headless install, mount your public key into the container with `-v "$HOME/.ssh/id_ed25519.pub:/tmp/key.pub:ro"` and add `--root-ssh-authorized-keys /tmp/key.pub` to the install command; the key authorizes root, and first boot also installs it for `core`. See the root [installation instructions](../../README.md) for the full details.
+
+There is no first-boot enrollment or host-wide setup; start the app from the signed-in user's shell as shown in [Use](#use).
 
 ## Use
 

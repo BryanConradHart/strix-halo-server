@@ -39,7 +39,7 @@ jobs:
           registry_token: ${{ secrets.GITHUB_TOKEN }}
           cosign_private_key: ${{ secrets.COSIGN_PRIVATE_KEY }}
           cosign_public_key: ${{ secrets.COSIGN_PUBLIC_KEY }}
-          prune: true
+          pr_event_number: ${{ github.event.number }}
           push: false
           skip_checkout: true
 

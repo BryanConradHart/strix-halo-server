@@ -1,7 +1,7 @@
 name: strix-halo-server-lemonade
 description: Strix Halo bootc image with Lemonade Server
-base-image: ghcr.io/ublue-os/ucore
-image-version: stable
+base-image: ghcr.io/bryanconradhart/single-purpose-os-base
+image-version: latest
 
 modules:
   - from-file: ../../../shared/strix-modules.yml

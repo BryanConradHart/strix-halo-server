@@ -1,8 +1,9 @@
 name: Build and Publish Strix Halo Image
 
 on:
-  schedule:
-    - cron: '0 1 * * 1' # Rebuilds automatically every Monday at 1 AM UTC, after single-purpose-os's midnight rebuild publishes fresh Arcane base images
+  repository_dispatch:
+    types:
+      - spos-images-published # single-purpose-os triggers this after every build it publishes, scheduled or not
   push:
     branches:
       - main # Triggers a fresh build whenever you push or merge to main
@@ -65,7 +66,7 @@ jobs:
           registry_token: ${{ secrets.GITHUB_TOKEN }}
           cosign_private_key: ${{ secrets.COSIGN_PRIVATE_KEY }}
           cosign_public_key: ${{ secrets.COSIGN_PUBLIC_KEY }}
-          prune: true
+          pr_event_number: ${{ github.event.number }}
           push: true
           skip_checkout: true
 

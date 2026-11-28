@@ -300,10 +300,7 @@
           type: "manager",
           service: "arcane-manager.service",
           file: "/etc/arcane/manager.env",
-          directories: [
-            { path: "/etc/arcane", mode: 457, user: "root", group: "root" },
-            { path: "/var/home/core/arcane-projects", mode: 488, user: "core", group: "core" },
-          ],
+          directories: [{ path: "/etc/arcane", mode: 457, user: "root", group: "root" }],
           environment: (values) => `ARCANE_APP_URL=${values.url}\nARCANE_ENCRYPTION_KEY=${values.key}`,
         },
         "ghcr.io/bryanconradhart/strix-halo-server-arcane-agent": {

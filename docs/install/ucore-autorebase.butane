@@ -20,8 +20,8 @@ kernel_arguments:
     - ttm.page_pool_size=32505856
     - amdttm.pages_limit=32505856
     - amdttm.page_pool_size=32505856
-    - iommu=off
-    - amd_iommu=off
+    - iommu=pt
+    - amd_iommu=pt
 systemd:
   units:
     - name: ucore-unsigned-autorebase.service
