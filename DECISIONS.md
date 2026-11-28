@@ -52,6 +52,7 @@ Installation uses bootc alone: `bootc switch` on an existing bootc system, and `
 - `bootc install` applies the image's own configuration (kernel arguments, files) directly; installing via an ostree/Butane bootstrap and switching later did not reliably apply image-declared kargs.
 - One installation mechanism removes the parallel provisioning surface: the builder utility duplicated what the interactive first-login setup and Quadlet drop-ins already do, and it required its own credential-handling requirements.
 - Machine-local customization during install is covered by placing drop-in files into the installed system's `/etc` before first reboot; secrets are entered during first-login setup instead of being baked into a generated config file.
+- The GitHub Pages site that once hosted the Butane builder now hosts per-variant drop-in generators, which assemble a `20-custom.conf` (and a root-only env file for secrets) for the same install-time placement; they run entirely in the browser and transmit nothing.
 - Fedora's bootc docs treat bootc-image-builder disk images (ISO/raw/qcow2) as the more common provisioning path, but uCore has no interactive installer to boot, so a forked installer would be ours to build and maintain. Users who need machine images can run bootc-image-builder themselves; we don't publish or maintain those artifacts.
 
 ## 0004. Temporary `core` password, SSH key shared to `core` at first boot

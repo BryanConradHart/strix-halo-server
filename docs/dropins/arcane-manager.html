@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Arcane Manager drop-in generator</title>
+  <link rel="stylesheet" href="../assets/dropins.css">
+</head>
+<body>
+  <main>
+    <h1>Arcane Manager drop-in generator</h1>
+    <p id="intro"></p>
+    <p class="hint warning">Every value stays in this browser: the page never submits, transmits, or stores what you enter. The generated files contain your credentials; keep them private.</p>
+
+    <form id="scenario-form" onsubmit="return false">
+      <div id="scenarios"></div>
+      <button id="generate" type="button">Generate drop-in</button>
+    </form>
+
+    <p id="errors" class="error" role="alert" hidden></p>
+
+    <section id="result" class="card" hidden aria-live="polite">
+      <h2>Your drop-in</h2>
+      <label for="dropin-output">20-custom.conf</label>
+      <textarea id="dropin-output" class="output" readonly spellcheck="false"></textarea>
+      <button id="copy-dropin" type="button">Copy drop-in</button>
+      <a id="download-dropin" class="button" download="20-custom.conf">Download 20-custom.conf</a>
+
+      <div id="env-card" hidden>
+        <label for="env-output">Environment file</label>
+        <textarea id="env-output" readonly spellcheck="false"></textarea>
+        <button id="copy-env" type="button">Copy environment file</button>
+        <a id="download-env" class="button">Download environment file</a>
+      </div>
+
+      <div id="files-card" hidden></div>
+
+      <h3>Install it</h3>
+      <p>Copy the files to the live environment you install from, then apply them to the installed system before rebooting. See the <a href="https://github.com/BryanConradHart/strix-halo-server/blob/main/variants/arcane-manager/README.md#install-with-customization">variant README</a> for the full install flow.</p>
+      <pre id="commands-output"></pre>
+      <button id="copy-commands" type="button">Copy commands</button>
+    </section>
+  </main>
+  <script src="../assets/dropins-volumes.js"></script>
+  <script>
+    window.DROPIN_SPEC = {
+      title: "Arcane Manager drop-in generator",
+      unit: "arcane-manager",
+      envFile: { path: "/etc/arcane/manager-user.env", localName: "manager-user.env" },
+      intro: "Build a <code>20-custom.conf</code> drop-in for the Arcane Manager service by filling in the scenarios you need. Leave a scenario off and first-login setup will ask for it instead.",
+      scenarios: [
+        {
+          id: "app-url",
+          title: "Public URL",
+          description: "The URL administrators use to reach Arcane. Set this when a reverse proxy or tailnet address fronts the manager; first-login setup otherwise asks for it.",
+          fields: [
+            { key: "url", label: "Arcane Manager URL", type: "url", placeholder: "https://arcane.example.com", pattern: "https?://[^\\s]+", patternMessage: "Enter a URL starting with http:// or https://." },
+          ],
+          build: (v) => ({ container: [`Environment=ARCANE_APP_URL=${v.url}`] }),
+        },
+        {
+          id: "encryption-key",
+          title: "Encryption key",
+          description: "Arcane encrypts stored credentials with this key; if it is lost, stored secrets are unrecoverable. Setup generates one unless you supply it here. The key goes in a root-only environment file, not the drop-in.",
+          fields: [
+            { key: "key", label: "Encryption key", type: "secret", pattern: "[A-Za-z0-9_\\-+/=]{32,}", patternMessage: "Use at least 32 characters (hex, base64, or any long random string).", generate: () => randomHex(32), generateLabel: "Generate a key" },
+          ],
+          build: () => ({
+            container: ["EnvironmentFile=/etc/arcane/manager-user.env"],
+            env: ["ARCANE_ENCRYPTION_KEY=${key}"],
+          }),
+        },
+        window.dropinVolumeMounts({
+          id: "mounts",
+          title: "Volume mounts",
+          description: "Give the container storage it needs: its database, its backups, its projects, or shares for the stacks Arcane manages. Each mount is a named volume on the local disk or backed by an NFS share (for example a NAS). NFS mounts are emitted as Quadlet <code>.volume</code> files created automatically before the service starts, so there is no host setup to do after install. Add as many mounts as you need.",
+          placeholder: "arcane-data",
+          mountPlaceholder: "/srv/storage",
+          exportPlaceholder: ":/srv/nfs/share",
+          purposes: [
+            { value: "data", label: "Arcane data (database and settings)", article: "the", defaultName: "arcane-data", mount: (n) => [`Volume=${n}:/app/data`] },
+            { value: "backups", label: "Arcane volume backups", article: "the", defaultName: "arcane-backups", mount: (n) => [`Volume=${n}:/backups`], env: (n) => [`Environment=ARCANE_BACKUP_VOLUME_NAME=${n}`] },
+            { value: "projects", label: "Arcane projects", article: "the", defaultName: "arcane-projects", mount: (n) => [`Volume=${n}:/opt/docker`], env: () => ["Environment=ARCANE_PROJECTS_DIRECTORY=/opt/docker"] },
+          ],
+        }),
+        {
+          id: "projects",
+          title: "Projects on a host directory",
+          description: "Without this, Arcane's projects live inside the container and are lost when it updates. Setup asks for a location and writes this itself; supplying it here answers the question at install time.",
+          fields: [
+            { key: "path", label: "Host directory for projects", placeholder: "/srv/arcane-projects", pattern: "/[^\\s]*", patternMessage: "Enter an absolute host path." },
+          ],
+          build: (v) => ({
+            container: [
+              `Volume=${v.path}:/opt/docker`,
+              "Environment=ARCANE_PROJECTS_DIRECTORY=/opt/docker",
+            ],
+          }),
+        },
+        {
+          id: "ownership",
+          title: "File ownership (PUID/PGID)",
+          description: "The service runs as root by default. Set numeric user and group IDs when projects or mounted shares live on storage (NFS or SMB) whose files are owned by a specific account, so Arcane can read and write them.",
+          fields: [
+            { key: "puid", label: "PUID (user id)", type: "number", min: "0", placeholder: "1000", required: false },
+            { key: "pgid", label: "PGID (group id)", type: "number", min: "0", placeholder: "1000", required: false },
+          ],
+          validate: (v) => (v.puid && v.pgid ? [] : ["Enter both a PUID and a PGID, or turn this scenario off."]),
+          build: (v) => ({ container: [`Environment=PUID=${v.puid}`, `Environment=PGID=${v.pgid}`] }),
+        },
+        {
+          id: "port",
+          title: "Different port",
+          description: "The manager publishes port 3552 by default. Remap the host port for a conflict, or publish on loopback only when a reverse proxy on this host connects to it.",
+          fields: [
+            { key: "port", label: "Host port", type: "number", min: "1", max: "65535", placeholder: "8443", required: false },
+            { key: "loopback", label: "Publish on 127.0.0.1 only", type: "check", required: false, hint: "Use when a reverse proxy on this host connects to Arcane." },
+          ],
+          validate: (v) => (v.port ? [] : ["Enter a host port for the port scenario."]),
+          build: (v) => ({ container: ["PublishPort=", `PublishPort=${v.loopback ? "127.0.0.1:" : ""}${v.port}:3552`] }),
+        },
+        {
+          id: "proxies",
+          title: "Behind a reverse proxy",
+          description: "Tells Arcane which proxy addresses to trust for <code>X-Forwarded-*</code> headers, so logins and rate limiting see real client IPs. Each entry is a CIDR (a single IP needs /32).",
+          fields: [
+            { key: "cidrs", label: "Trusted proxy CIDRs (comma-separated)", placeholder: "10.0.0.0/24, 100.64.0.0/10", pattern: "[0-9a-fA-F:.]+/\\d{1,3}(?:\\s*,\\s*[0-9a-fA-F:.]+/\\d{1,3})*", patternMessage: "Enter comma-separated CIDRs like 10.0.0.0/24; a single IP needs /32." },
+          ],
+          build: (v) => ({ container: [`Environment=ARCANE_TRUSTED_PROXIES=${v.cidrs}`] }),
+        },
+        {
+          id: "timezone",
+          title: "Timezone",
+          description: "Scheduled jobs (update checks, pruning, GitOps sync) run in UTC unless you set a timezone.",
+          fields: [
+            { key: "tz", label: "Timezone (IANA name)", placeholder: "America/New_York", pattern: "[A-Za-z]+(?:[_+-][A-Za-z]+)?(?:/[A-Za-z0-9_+-]+)?", patternMessage: "Enter an IANA timezone like America/New_York." },
+          ],
+          build: (v) => ({ container: [`Environment=TZ=${v.tz}`] }),
+        },
+        {
+          id: "limits",
+          title: "Resource limits",
+          description: "Optionally cap the manager's memory or CPU, or lengthen the restart delay. Leave blank to keep the defaults.",
+          fields: [
+            { key: "memory", label: "MemoryMax (optional)", placeholder: "1G", required: false, pattern: "\\d+[KMG]?", patternMessage: "Use a size like 512M or 2G." },
+            { key: "cpu", label: "CPUQuota (optional)", placeholder: "50%", required: false, pattern: "\\d+%?", patternMessage: "Use a percentage like 50%." },
+            { key: "restart", label: "RestartSec (optional)", placeholder: "30s", required: false, pattern: "\\d+(?:ms|s|min)?", patternMessage: "Use a duration like 30s." },
+          ],
+          validate: (v) => (v.memory || v.cpu || v.restart ? [] : ["Fill in at least one limit, or turn this scenario off."]),
+          build: (v) => ({
+            service: [
+              ...(v.memory ? [`MemoryMax=${v.memory}`] : []),
+              ...(v.cpu ? [`CPUQuota=${v.cpu}`] : []),
+              ...(v.restart ? [`RestartSec=${v.restart}`] : []),
+            ],
+          }),
+        },
+      ],
+    };
+  </script>
+  <script src="../assets/dropins.js"></script>
+  <script>buildDropinPage();</script>
+</body>
+</html>

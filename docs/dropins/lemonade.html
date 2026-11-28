@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Lemonade Server drop-in generator</title>
+  <link rel="stylesheet" href="../assets/dropins.css">
+</head>
+<body>
+  <main>
+    <h1>Lemonade Server drop-in generator</h1>
+    <p id="intro"></p>
+    <p class="hint warning">Every value stays in this browser: the page never submits, transmits, or stores what you enter. The generated files contain your credentials; keep them private.</p>
+
+    <form id="scenario-form" onsubmit="return false">
+      <div id="scenarios"></div>
+      <button id="generate" type="button">Generate drop-in</button>
+    </form>
+
+    <p id="errors" class="error" role="alert" hidden></p>
+
+    <section id="result" class="card" hidden aria-live="polite">
+      <h2>Your drop-in</h2>
+      <label for="dropin-output">20-custom.conf</label>
+      <textarea id="dropin-output" class="output" readonly spellcheck="false"></textarea>
+      <button id="copy-dropin" type="button">Copy drop-in</button>
+      <a id="download-dropin" class="button" download="20-custom.conf">Download 20-custom.conf</a>
+
+      <div id="env-card" hidden>
+        <label for="env-output">Environment file</label>
+        <textarea id="env-output" readonly spellcheck="false"></textarea>
+        <button id="copy-env" type="button">Copy environment file</button>
+        <a id="download-env" class="button">Download environment file</a>
+      </div>
+
+      <div id="files-card" hidden></div>
+
+      <h3>Install it</h3>
+      <p>Copy the files to the live environment you install from, then apply them to the installed system before rebooting. See the <a href="https://github.com/BryanConradHart/strix-halo-server/blob/main/variants/lemonade/README.md#install-with-customization">variant README</a> for the full install flow.</p>
+      <pre id="commands-output"></pre>
+      <button id="copy-commands" type="button">Copy commands</button>
+    </section>
+  </main>
+  <script src="../assets/dropins-volumes.js"></script>
+  <script>
+    window.DROPIN_SPEC = {
+      title: "Lemonade Server drop-in generator",
+      unit: "lemonade-server",
+      envFile: { path: "/etc/lemonade/server-user.env", localName: "server-user.env" },
+      intro: "Build a <code>20-custom.conf</code> drop-in for the Lemonade Server service by filling in the scenarios you need. Leave a scenario off and first-login setup will ask for it instead.",
+      scenarios: [
+        {
+          id: "api-key",
+          title: "API key",
+          description: "Clients must send this bearer key to use the API. Without a key the API is unauthenticated, so set one before exposing the port beyond loopback. Setup generates one unless you supply it here. The key goes in a root-only environment file, not the drop-in.",
+          fields: [
+            { key: "key", label: "API key (at least 32 characters)", type: "secret", pattern: "[A-Za-z0-9_-]{32,}", patternMessage: "Use at least 32 letters, numbers, underscores, or hyphens.", generate: () => randomHex(32), generateLabel: "Generate a key" },
+          ],
+          build: () => ({
+            container: ["EnvironmentFile=/etc/lemonade/server-user.env"],
+            env: ["LEMONADE_API_KEY=${key}"],
+          }),
+        },
+        {
+          id: "port",
+          title: "Different port",
+          description: "The server publishes port 13305 by default. Remap the host port for a conflict, or publish on loopback only when a reverse proxy on this host fronts it.",
+          fields: [
+            { key: "port", label: "Host port", type: "number", min: "1", max: "65535", placeholder: "9527", required: false },
+            { key: "loopback", label: "Publish on 127.0.0.1 only", type: "check", required: false, hint: "Use when clients on this machine only, or a local reverse proxy, reach the API." },
+          ],
+          validate: (v) => (v.port ? [] : ["Enter a host port for the port scenario."]),
+          build: (v) => ({ container: ["PublishPort=", `PublishPort=${v.loopback ? "127.0.0.1:" : ""}${v.port}:13305`] }),
+        },
+        {
+          id: "models",
+          title: "Models on a host directory",
+          description: "Models are tens of gigabytes; the named volume keeps them inside <code>/var/lib/containers</code>. Move them to a host directory or external drive instead. Clearing the shipped volume list means restating the ones to keep, which this generator does for you.",
+          fields: [
+            { key: "path", label: "Host directory for models", placeholder: "/srv/models", pattern: "/[^\\s]*", patternMessage: "Enter an absolute host path." },
+          ],
+          build: (v) => ({
+            container: [
+              "Volume=",
+              "Volume=lemonade-cache:/opt/lemonade/.cache/huggingface",
+              "Volume=lemonade-llama:/opt/lemonade/llama",
+              "Volume=lemonade-data:/opt/lemonade/.cache/lemonade",
+              "Volume=lemonade-config:/opt/lemonade/.config/lemonade",
+              `Volume=${v.path}:/opt/lemonade/models`,
+            ],
+          }),
+        },
+        window.dropinVolumeMounts({
+          id: "mounts",
+          title: "Volume mounts",
+          description: "Give the server extra storage it needs: model files or datasets on a NAS, for example. Each mount is a named volume on the local disk or backed by an NFS share. NFS mounts are emitted as Quadlet <code>.volume</code> files created automatically before the service starts, so there is no host setup to do after install. Add as many mounts as you need.",
+          placeholder: "media-share",
+          mountPlaceholder: "/srv/media",
+          exportPlaceholder: ":/srv/nfs/media",
+        }),
+        {
+          id: "limits",
+          title: "Service tuning",
+          description: "Loading a large model on first use can take minutes; lengthen the start timeout so systemd does not kill it. Optionally cap memory or CPU.",
+          fields: [
+            { key: "timeout", label: "TimeoutStartSec (optional)", placeholder: "900", required: false, pattern: "\\d+", patternMessage: "Use a number of seconds, like 900." },
+            { key: "memory", label: "MemoryMax (optional)", placeholder: "96G", required: false, pattern: "\\d+[KMG]?", patternMessage: "Use a size like 8G. Avoid capping memory on unified-memory systems like Strix Halo." },
+            { key: "cpu", label: "CPUQuota (optional)", placeholder: "50%", required: false, pattern: "\\d+%?", patternMessage: "Use a percentage like 50%." },
+          ],
+          validate: (v) => (v.timeout || v.memory || v.cpu ? [] : ["Fill in at least one setting, or turn this scenario off."]),
+          build: (v) => ({
+            service: [
+              ...(v.timeout ? [`TimeoutStartSec=${v.timeout}`] : []),
+              ...(v.memory ? [`MemoryMax=${v.memory}`] : []),
+              ...(v.cpu ? [`CPUQuota=${v.cpu}`] : []),
+            ],
+          }),
+        },
+      ],
+    };
+  </script>
+  <script src="../assets/dropins.js"></script>
+  <script>buildDropinPage();</script>
+</body>
+</html>

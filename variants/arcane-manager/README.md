@@ -45,7 +45,7 @@ sudo install -D -m 0600 ~/manager-user.env \
 sudo umount /mnt/newroot
 ```
 
-Each example below is a snippet of `20-custom.conf`; combine the ones you want into that single file. Setup writes its own `10-projects.conf` to the same directory, so keep your file at `20-` or higher: setup never touches your files, and on login it asks only for required values you haven't supplied.
+Each example below is a snippet of `20-custom.conf`; combine the ones you want into that single file. Setup writes its own `10-projects.conf` to the same directory, so keep your file at `20-` or higher: setup never touches your files, and on login it asks only for required values you haven't supplied. To build a drop-in interactively instead of writing one by hand, use the [drop-in generator](https://bryanconradhart.github.io/strix-halo-server/dropins/arcane-manager.html).
 
 **Store projects on a host path** (without this, projects are lost when the container updates). Setup asks for the location and writes this itself; the drop-in answers for it at install time:
 

@@ -41,7 +41,7 @@ sudo install -D -m 0600 ~/server-user.env \
 sudo umount /mnt/newroot
 ```
 
-Each example below is a snippet of `20-custom.conf`; combine the ones you want into that single file. On first login, setup asks for any required values you haven't supplied.
+Each example below is a snippet of `20-custom.conf`; combine the ones you want into that single file. On first login, setup asks for any required values you haven't supplied. To build a drop-in interactively instead of writing one by hand, use the [drop-in generator](https://bryanconradhart.github.io/strix-halo-server/dropins/lemonade.html).
 
 **Provide the API key yourself**, for example to rotate it. The key is a secret, so keep it out of the drop-in — inline values are visible to any local user — by referencing an env file. Create `~/server-user.env` containing `LEMONADE_API_KEY=…`; the install command above copies it root-only alongside the drop-in (the service won't start if the file is missing):
 

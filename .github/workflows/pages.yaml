@@ -1,11 +1,11 @@
-name: Publish bare-metal installer form
+name: Publish drop-in generator pages
 
 on:
   push:
     branches:
       - main
     paths:
-      - docs/install/**
+      - docs/**
       - .github/workflows/pages.yaml
   workflow_dispatch:
 

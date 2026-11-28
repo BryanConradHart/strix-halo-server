@@ -45,7 +45,7 @@ sudo install -D -m 0600 ~/agent-user.env \
 sudo umount /mnt/newroot
 ```
 
-Each example below is a snippet of `20-custom.conf`; combine the ones you want into that single file. On login, enrollment asks for any required values you haven't supplied.
+Each example below is a snippet of `20-custom.conf`; combine the ones you want into that single file. On login, enrollment asks for any required values you haven't supplied. To build a drop-in interactively instead of writing one by hand, use the [drop-in generator](https://bryanconradhart.github.io/strix-halo-server/dropins/arcane-agent.html).
 
 **Change the Manager URL:**
 

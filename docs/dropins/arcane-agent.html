@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Arcane Agent drop-in generator</title>
+  <link rel="stylesheet" href="../assets/dropins.css">
+</head>
+<body>
+  <main>
+    <h1>Arcane Agent drop-in generator</h1>
+    <p id="intro"></p>
+    <p class="hint warning">Every value stays in this browser: the page never submits, transmits, or stores what you enter. The generated files contain your credentials; keep them private.</p>
+
+    <form id="scenario-form" onsubmit="return false">
+      <div id="scenarios"></div>
+      <button id="generate" type="button">Generate drop-in</button>
+    </form>
+
+    <p id="errors" class="error" role="alert" hidden></p>
+
+    <section id="result" class="card" hidden aria-live="polite">
+      <h2>Your drop-in</h2>
+      <label for="dropin-output">20-custom.conf</label>
+      <textarea id="dropin-output" class="output" readonly spellcheck="false"></textarea>
+      <button id="copy-dropin" type="button">Copy drop-in</button>
+      <a id="download-dropin" class="button" download="20-custom.conf">Download 20-custom.conf</a>
+
+      <div id="env-card" hidden>
+        <label for="env-output">Environment file</label>
+        <textarea id="env-output" readonly spellcheck="false"></textarea>
+        <button id="copy-env" type="button">Copy environment file</button>
+        <a id="download-env" class="button">Download environment file</a>
+      </div>
+
+      <div id="files-card" hidden></div>
+
+      <h3>Install it</h3>
+      <p>Copy the files to the live environment you install from, then apply them to the installed system before rebooting. See the <a href="https://github.com/BryanConradHart/strix-halo-server/blob/main/variants/arcane-agent/README.md#install-with-customization">variant README</a> for the full install flow.</p>
+      <pre id="commands-output"></pre>
+      <button id="copy-commands" type="button">Copy commands</button>
+    </section>
+  </main>
+  <script src="../assets/dropins-volumes.js"></script>
+  <script>
+    window.DROPIN_SPEC = {
+      title: "Arcane Agent drop-in generator",
+      unit: "arcane-agent",
+      envFile: { path: "/etc/arcane/agent-user.env", localName: "agent-user.env" },
+      intro: "Build a <code>20-custom.conf</code> drop-in for the Arcane agent service by filling in the scenarios you need. Leave a scenario off and first-login enrollment will ask for it instead.",
+      scenarios: [
+        {
+          id: "manager-url",
+          title: "Manager URL",
+          description: "The Arcane Manager the agent dials out to — the same URL administrators use to reach the manager. Enrollment otherwise asks for it.",
+          fields: [
+            { key: "url", label: "Arcane Manager API URL", type: "url", placeholder: "https://arcane.example.com", pattern: "https?://[^\\s]+", patternMessage: "Enter a URL starting with http:// or https://." },
+          ],
+          build: (v) => ({ container: [`Environment=ARCANE_MANAGER_API_URL=${v.url}`] }),
+        },
+        {
+          id: "token",
+          title: "Agent token",
+          description: "The enrollment token shown when you add the environment in Arcane Manager. Supplying it here completes enrollment at install time. The token goes in a root-only environment file, not the drop-in.",
+          fields: [
+            { key: "token", label: "Agent token (starts with arc_)", type: "secret", pattern: "arc_[A-Za-z0-9_-]+", patternMessage: "The token starts with arc_ and contains letters, numbers, underscores, or hyphens." },
+          ],
+          build: () => ({
+            container: ["EnvironmentFile=/etc/arcane/agent-user.env"],
+            env: ["ARCANE_AGENT_TOKEN=${token}"],
+          }),
+        },
+        {
+          id: "transport",
+          title: "Connection transport",
+          description: "The agent connects to the manager over gRPC with WebSocket fallback. Pin one transport when a proxy in between only supports one of them.",
+          fields: [
+            { key: "transport", label: "Transport", type: "select", options: [
+              { value: "grpc", label: "gRPC" },
+              { value: "websocket", label: "WebSocket" },
+            ] },
+          ],
+          build: (v) => ({ container: [`Environment=ARCANE_AGENT_TRANSPORT=${v.transport}`] }),
+        },
+        {
+          id: "limits",
+          title: "Resource limits",
+          description: "Optionally cap the agent's memory or CPU, or lengthen the restart delay. Leave blank to keep the defaults.",
+          fields: [
+            { key: "memory", label: "MemoryMax (optional)", placeholder: "1G", required: false, pattern: "\\d+[KMG]?", patternMessage: "Use a size like 512M or 2G." },
+            { key: "cpu", label: "CPUQuota (optional)", placeholder: "50%", required: false, pattern: "\\d+%?", patternMessage: "Use a percentage like 50%." },
+            { key: "restart", label: "RestartSec (optional)", placeholder: "30s", required: false, pattern: "\\d+(?:ms|s|min)?", patternMessage: "Use a duration like 30s." },
+          ],
+          validate: (v) => (v.memory || v.cpu || v.restart ? [] : ["Fill in at least one limit, or turn this scenario off."]),
+          build: (v) => ({
+            service: [
+              ...(v.memory ? [`MemoryMax=${v.memory}`] : []),
+              ...(v.cpu ? [`CPUQuota=${v.cpu}`] : []),
+              ...(v.restart ? [`RestartSec=${v.restart}`] : []),
+            ],
+          }),
+        },
+      ],
+    };
+  </script>
+  <script src="../assets/dropins.js"></script>
+  <script>buildDropinPage();</script>
+</body>
+</html>
